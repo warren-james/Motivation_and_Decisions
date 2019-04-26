@@ -172,7 +172,12 @@ plt
 
 #### PART 2 ####
 #### make proportion plots ####
-# centre fixations 
+# should remove participant that didn't complete all blocks 
+switch_df <- switch_df %>%
+  group_by(participant) %>%
+  filter(max(block) == 4)
+
+# centre fixations
 centre_dat <- switch_df %>%
   group_by(participant, separation) %>% 
   summarise(prop_fixated = mean(centre)) %>%

@@ -92,7 +92,7 @@
 \addcontentsline{toc}{subsection}{Procedure}
 \paragraph{} The experiment took part over two sessions. The first session was to measure each participant's visual acuity in order to tailor the second session to each individual. The first session lasted approximately 30 minutes. In the second session, participants carried out the actual decision task, which lasted between 40 and 50 minutes. 
 
-\paragraph{} Both sessions made use of and Eyelink 1000 (version 4.594) (\textit{get reference}) which recorded eye position at 1000 Hz. Participants were sat $\approx45cm$ from the screen, which was maintained throughout the experiment by use of an adjustable chin rest. \textit{Was this experiment on the OLED?}. The experiment was programmed and run in Matlab 7.9.0 (R2009b) with Psychtoolbox \textit{\textbf{get ref}} and EyelinkToolbox functions \textit{\textbf{get ref}}. Prior to starting each session, a 5-point calibration was carried out. Participants were recalibrated prior to starting a new block. Additionally, they were also recalibrated if they had failed to fixate appropriately 10 times since the last calibration, or if there were 5 errors in a row.
+\paragraph{} Both sessions made use of and Eyelink 1000 (version 4.594) (\textit{get reference}) which recorded eye position at 1000 Hz. Participants were sat $\approx45cm$ from the screen, which was maintained throughout the experiment by use of an adjustable chin rest. \textit{Was this experiment on the OLED?}. The experiment was programmed and run in Matlab 7.9.0 (R2009b) with Psychtoolbox \citep{pelli1997videotoolbox} and EyelinkToolbox functions \citep{cornelissen2002eyelink}. Prior to starting each session, a 5-point calibration was carried out. Participants were recalibrated prior to starting a new block. Additionally, they were also recalibrated if they had failed to fixate appropriately 10 times since the last calibration, or if there were 5 errors in a row.
 
 \subsubsection*{Session 1}
 \paragraph{} In the first session, participants were presented with a fixation cross with two boxes placed either side \textit{\textbf{get fig}}. They were told that their task was to identify whether a small dot \textit{\textbf{get size of this dot}} had appeared in the top or the bottom half of one of the boxes (each $\approx1^{\circ}$). It did not matter which box it had appeared in, they were simply to report whether it was up or down by pressing the "up" or "down" arrow, respectively, on the keyboard. To commence each trial, participants had to press the space bar whilst fixating the central cross. After maintaining fixation for 700ms, the target dot would appear in one of the two boxes, at random, and was displayed for 700ms (\textit{\textbf{Need to double check all this}}). If participants broke fixation during any stage of this process, the screen would turn red for 700ms to indicate that they had broken fixation. 
@@ -107,7 +107,22 @@
 \paragraph{}
 
 \section*{Results}
-\addcontentsline{toc}{section}{Methods}
+\addcontentsline{toc}{section}{Results}
+\paragraph{} All analysis was carried out in R \citep{R} using the BRMS package \citep{brms2017,brms2018}. Comparison data was retrieved from \url{https://osf.io/t6c5q/} in order to compare the current study's data to a group without the presence of a clear goal, but who otherwise carried out the same task. The full methods and analysis of this comparison data can be found by following the link provided. 
+
+\paragraph{} For the purposes of this study, the first four blocks completed by participants in this comparison set were taken as they consisted of trials in which participants were instructed where to fixated on every trial (henceforth referred to as the "\textit{optimal}" group) and others that had no instructions and performed the base task (henceforth referred to as the "\textit{control}" group). 
+
+\subsection*{Data Preparation}
+\paragraph{} Each participant's average accuracy was calculated by taking the mean of their success rate throughout the experiment. Additionally, using data from each participant's performance in the first session, an expected accuracy value was calculated depending on where the participant had fixated on each trial. For example, if the boxes were far apart and the participant had fixated one of the side boxes on that trial, they would have a $\approx$100\% chance of success at the fixated box (b$_f$) and $\approx$50\% chance of success at the non-fixated box (b$_{nf}$) as this would be imperceptable but they would have a 50\% ($c$) chance due to the nature of the task. Each of these boxes would be equally likely to contain the target and so the expected chance of success on a trial like this would be 75\% which is given by calculating $(b_f + b_{nf})\times c$. This was calculated for each participant, on each trial. This was then averaged for each participant to give an average expected accuracy. 
+
+\begin{figure}[ht!]
+	\includegraphics[scale=0.5]{../Figures/Part_2_all_groups.png}
+	\centering
+	\captionsetup{justification=centering}
+	\caption{Plot of proportion of fixations to the side box (y-axis) with increasing Delta (x-axis). The bottom set of plots (in red) demonstrate what behaviour would look like if participants had employed an optimal fixation strategy}
+	\label{fig:Position_raw}
+\end{figure}
+
 \begin{figure}[ht!]
 	\includegraphics[scale=0.5]{../Figures/Model_output_raw_acc.png}
 	\centering
@@ -128,5 +143,14 @@
 
 \section*{Conclusion}
 \addcontentsline{toc}{section}{Conclusion}
+
+% Bibliography
+\clearpage
+\begingroup\onehalfspacing
+\newpage
+\addcontentsline{toc}{section}{References}
+\bibliographystyle{apacite}
+\bibliography{MD_bib}
+\endgroup
 
 \end{document}

@@ -93,6 +93,11 @@ get_Fish <- function(dataframe){
 #### Load Penguin ####
 # read in penguin data 
 load("scratch/switch_nar_data")
+# remove participant that didn't complete 4 blocks #
+switch_df <- switch_df %>%
+  group_by(participant) %>%
+  filter(max(block) == 4) %>%
+  ungroup()
 df_penguin <- switch_df
 
 # tidy 
@@ -101,9 +106,6 @@ rm(switch_df)
 #### Load Control ####
 # read in control data 
 load("scratch/switch_df_control_nar")
-
-#### Load Control: Transfer Paper ####
-load("scratch/switch_nar_data")
 
 # subset this data
 df_control <- switch_df_control %>%
@@ -148,16 +150,22 @@ df_control <- df_control %>%
          -part)
 
 df_penguin <- df_penguin %>%
-  select(-trial)
+  select(participant,
+         block,
+         separation,
+         fixated_box,
+         correct,
+         switch_point,
+         centre,
+         score,
+         num_fish,
+         group)
 
 # sort participants 
-df <- rbind(df_penguin, df_optimal)
-df <- rbind(df, df_control) 
-df <- df %>% 
-  mutate(participant = paste(participant, group, sep = "_"))
-
-# add in whether it's before or after switch point 
-df$dist_type <- ifelse(df$separation > round(as.numeric(df$switch_point)), "far", "close")
+df <- rbind(df_control, df_optimal) %>%
+  rbind(df_penguin) %>%
+  mutate(participant = paste(participant, group, sep = "_"),
+         dist_type = ifelse(df$separation > round(as.numeric(df$switch_point)), "far", "close"))
 
 # save this
 save(df, file = "scratch/all_data")
@@ -246,7 +254,7 @@ plt_pos_motivated <- df %>%
   geom_point() + 
   theme_bw() + 
   theme(strip.text.x = element_blank()) +
-  facet_wrap(~group + participant, ncol = 7) + 
+  facet_wrap(~group + participant, ncol = 6) + 
   scale_colour_manual(values = "#DDCC77")
 plt_pos_motivated$labels$y <- "Proportion of Fixations to the side"
 plt_pos_motivated$labels$x <- "" 
@@ -270,7 +278,7 @@ plt_pos_control$labels$x <- ""
 plt_pos_control$labels$colour <- "Group"
 
 plt <- gridExtra::grid.arrange(plt_pos_control, plt_pos_motivated, plt_pos_optimal)
-plt
+
 
 ggsave(file = "../Figures/Part_2_all_groups.png", plt,
        height = 10,

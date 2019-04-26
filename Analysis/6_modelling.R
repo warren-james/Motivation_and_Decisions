@@ -175,11 +175,6 @@ plt_group <- model_data_2 %>%
   add_predicted_draws(m_acc_group) %>%
   ggplot(aes(.prediction, colour = group, fill = group)) +
   geom_density(alpha = 0.3) +
-  # geom_density(data = model_data_2,
-  #              aes(Accuracy,
-  #                  colour = group,
-  #                  fill = NA),
-  #              alpha = 0.0001) +
   theme_minimal() +
   theme(legend.position = "bottom") + 
   ggthemes::scale_colour_ptol() +

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.19 (MiKTeX 2.9.6745 64-bit) (preloaded format=pdflatex 2018.7.13)  26 APR 2019 12:56
+This is pdfTeX, Version 3.14159265-2.6-1.40.19 (MiKTeX 2.9.6745 64-bit) (preloaded format=pdflatex 2018.7.13)  26 APR 2019 16:25
 entering extended mode
 **./Motivation_and_Decisions.tex
 (Motivation_and_Decisions.tex
@@ -536,45 +536,46 @@ LaTeX Font Info:    External font `cmex10' loaded for size
 \tf@toc=\write5
 \openout5 = `Motivation_and_Decisions.toc'.
 
- [2] [3]
-<../Figures/Model_output_raw_acc.png, id=69, 939.51pt x 361.35pt>
+ [2] [3] [4]
+<../Figures/Part_2_all_groups.png, id=94, 722.7pt x 722.7pt>
+File: ../Figures/Part_2_all_groups.png Graphic file (type png)
+<use ../Figures/Part_2_all_groups.png>
+Package pdftex.def Info: ../Figures/Part_2_all_groups.png  used on input line 1
+19.
+(pdftex.def)             Requested size: 361.3491pt x 361.3491pt.
+<../Figures/Model_output_raw_acc.png, id=95, 939.51pt x 361.35pt>
 File: ../Figures/Model_output_raw_acc.png Graphic file (type png)
 <use ../Figures/Model_output_raw_acc.png>
 Package pdftex.def Info: ../Figures/Model_output_raw_acc.png  used on input lin
-e 112.
+e 127.
 (pdftex.def)             Requested size: 469.75385pt x 180.67456pt.
- [4]
-<../Figures/Model_output_exp_acc.png, id=79, 939.51pt x 361.35pt>
+<../Figures/Model_output_exp_acc.png, id=96, 939.51pt x 361.35pt>
 File: ../Figures/Model_output_exp_acc.png Graphic file (type png)
 <use ../Figures/Model_output_exp_acc.png>
 Package pdftex.def Info: ../Figures/Model_output_exp_acc.png  used on input lin
-e 120.
+e 135.
 (pdftex.def)             Requested size: 469.75385pt x 180.67456pt.
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 132.
- [5 <../Figures/Model_output_raw_acc.png> <../Figures/Model_output_exp_acc.png>
+ [5] [6 <../Figures/Part_2_all_groups.png> <../Figures/Model_output_raw_acc.png
+>] [7 <../Figures/Model_output_exp_acc.png>] (Motivation_and_Decisions.bbl)
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 156.
+ [8
+
 ]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 132.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 156.
 
 (Motivation_and_Decisions.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 132.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 132.
-
-
-Package rerunfilecheck Warning: File `Motivation_and_Decisions.out' has changed
-.
-(rerunfilecheck)                Rerun to get outlines right
-(rerunfilecheck)                or use package `bookmark'.
-
-Package rerunfilecheck Info: Checksums for `Motivation_and_Decisions.out':
-(rerunfilecheck)             Before: 528F14EC2B0CF39CF8753E73D31D5291;347
-(rerunfilecheck)             After:  C962B82A516CE20A598E2290AAEE7566;349.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 156.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 156.
+Package rerunfilecheck Info: File `Motivation_and_Decisions.out' has not change
+d.
+(rerunfilecheck)             Checksum: 3CBEF38E3B11FB59F85D88291AF46BA0;397.
  ) 
 Here is how much of TeX's memory you used:
- 9510 strings out of 492973
- 145137 string characters out of 3126692
+ 9556 strings out of 492973
+ 146017 string characters out of 3126692
  271329 words of memory out of 3000000
- 13249 multiletter control sequences out of 15000+200000
- 9613 words of font info for 34 fonts, out of 3000000 for 9000
+ 13276 multiletter control sequences out of 15000+200000
+ 9782 words of font info for 35 fonts, out of 3000000 for 9000
  1141 hyphenation exceptions out of 8191
  44i,10n,43p,1245b,431s stack positions out of 5000i,500n,10000p,200000b,50000s
 <C:/Users/warre/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/public/amsfonts
@@ -582,14 +583,16 @@ Here is how much of TeX's memory you used:
 blic/amsfonts/cm/cmbxti10.pfb><C:/Users/warre/AppData/Local/Programs/MiKTeX 2.9
 /fonts/type1/public/amsfonts/cm/cmcsc10.pfb><C:/Users/warre/AppData/Local/Progr
 ams/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmmi12.pfb><C:/Users/warre/AppDat
-a/Local/Programs/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmr12.pfb><C:/Users/
-warre/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmsy10.p
-fb><C:/Users/warre/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/public/amsfont
-s/cm/cmsy8.pfb><C:/Users/warre/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/pu
-blic/amsfonts/cm/cmti12.pfb>
-Output written on Motivation_and_Decisions.pdf (6 pages, 241810 bytes).
+a/Local/Programs/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Users/
+warre/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmr12.pf
+b><C:/Users/warre/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/public/amsfonts
+/cm/cmsy10.pfb><C:/Users/warre/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/pu
+blic/amsfonts/cm/cmsy8.pfb><C:/Users/warre/AppData/Local/Programs/MiKTeX 2.9/fo
+nts/type1/public/amsfonts/cm/cmti12.pfb><C:/Users/warre/AppData/Local/Programs/
+MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmtt12.pfb>
+Output written on Motivation_and_Decisions.pdf (9 pages, 352513 bytes).
 PDF statistics:
- 121 PDF objects out of 1000 (max. 8388607)
- 27 named destinations out of 1000 (max. 500000)
- 67 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 175 PDF objects out of 1000 (max. 8388607)
+ 41 named destinations out of 1000 (max. 500000)
+ 80 words of extra memory for PDF output out of 10000 (max. 10000000)
 
