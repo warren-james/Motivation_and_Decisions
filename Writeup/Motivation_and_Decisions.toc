@@ -1,0 +1,16 @@
+\babel@toc {english}{}
+\contentsline {section}{Introduction}{3}{section*.3}
+\contentsline {section}{Methods}{3}{section*.4}
+\contentsline {subsection}{Participants}{3}{section*.5}
+\contentsline {paragraph}{}{3}{section*.6}
+\contentsline {subsection}{Procedure}{3}{section*.7}
+\contentsline {paragraph}{}{3}{section*.8}
+\contentsline {paragraph}{}{3}{section*.9}
+\contentsline {paragraph}{}{3}{section*.11}
+\contentsline {paragraph}{}{4}{section*.12}
+\contentsline {paragraph}{}{4}{section*.14}
+\contentsline {paragraph}{}{4}{section*.15}
+\contentsline {paragraph}{}{4}{section*.16}
+\contentsline {section}{Methods}{5}{section*.17}
+\contentsline {section}{Discussion}{5}{section*.20}
+\contentsline {section}{Conclusion}{5}{section*.21}
