@@ -122,7 +122,7 @@ df_all%>%
 #   facet_wrap(~dist_type)
 
 #### Using averages: beta ####
-# all interactions
+#### Beta: group*dist ####
 model_data <- df_all%>% 
   group_by(participant, dist_type, group) %>%
   summarise(Accuracy = mean(correct)) %>%
@@ -154,9 +154,7 @@ plt_group_dist
 
 
 
-
-
-# just by group 
+#### Beta: Group only ####
 model_data_2 <- df_all%>%
   group_by(participant, group) %>%
   summarise(Accuracy = mean(correct)) %>%
@@ -214,53 +212,74 @@ ggsave(plt_raw_acc, file = "../Figures/Model_output_raw_acc.png",
        height = 5,
        width = 13)
 
-
-#### STAN models ####
-# setup some STAN models 
-#### STAN: beta ####
-# try using the beta model first
-# this should set up all the contrasts I think?
-# X <- model.matrix(correct ~ (dist_type + group)^2, data = df)
-
-# the above way of setting up contrasts is a bit weird...
-# can do better than that probably... 
-# probably want to make my own matrix based on the data and use several predictors?
-
-# maybe try on a smaller dataset?
-# X <- model.matrix(Accuracy ~ (dist_type + group)^2, data = model_data)
-
-# this looks much more manageable
-
-# stan_data 
-# stan_df <- list(
-#   N = nrow(model_data),
-#   K = ncol(X),
-#   y = model_data$Accuracy,
-#   X = X)
-
-# # run model 
-# m_stan_group_dist <- stan(
-#   file = "modelling/models/beta_model.stan",
-#   data = stan_df,
-#   chains = 1,
-#   warmup = 1000,
-#   iter = 2000,
-#   refresh = 100
-# )
-
-# extract samples 
-# samples <- rstan::extract(m_stan_group_dist)
-
-# samples$beta[,1] = intercept 
-# samples$beta[,2] = distfar
-# samples$beta[,3] = groupmotivated
-# samples$beta[,4] = groupoptimal
-# samples$beta[,5] = distfar:groupmotivated
-# samples$beta[,6] = distfar:groupoptimal
+# HPDI for estimates 
+HPDI_m_acc_group <- plt_group[["data"]] %>%
+  group_by(group) %>%
+  summarise(lower = HPDI(.prediction, 0.95)[1],
+            upper = HPDI(.prediction, 0.95)[2])
 
 
+#### BRMS on expected accuracy ####
+model_data_3 <- df_all%>%
+  group_by(participant, group) %>%
+  summarise(pred_accuracy = mean(accuracy))
 
-#### STAN: trying it the way I know how to do ####
+# model 
+m_pacc_group <- brm(pred_accuracy ~ group,
+                    data = model_data_3,
+                    family = "beta",
+                    chains = 1,
+                    cores = 1,
+                    iter = 2000,
+                    warmup = 1000)
+
+plt_group <- model_data_3 %>%
+  add_predicted_draws(m_pacc_group) %>%
+  ggplot(aes(.prediction, colour = group, fill = group)) +
+  geom_density(alpha = 0.3) +
+  theme_minimal() +
+  theme(legend.position = "bottom") + 
+  ggthemes::scale_colour_ptol() +
+  ggthemes::scale_fill_ptol()
+plt_group$labels$x <- "Accuracy"
+plt_group$labels$fill <- "Group"
+plt_group$labels$colour <- "Group"
+plt_group
+
+plt_diff <- plt_group[["data"]] %>%
+  ungroup() %>%
+  select(group, .prediction, .draw) %>%
+  group_by(group, .draw) %>%
+  summarise(.prediction = mean(.prediction)) %>%
+  spread(group, .prediction) %>%
+  mutate("Motivated vs Control" = motivated - control,
+         "Optimal vs Motivated" = optimal - motivated,
+         "Optimal vs Control" = optimal - control) %>%
+  select(-control, -motivated, -optimal) %>%
+  gather("Motivated vs Control":"Optimal vs Control",
+         key = "Comparison",
+         value = "Difference") %>%
+  ggplot(aes(Difference, colour = Comparison, fill = Comparison)) + 
+  geom_density(alpha = 0.3) + 
+  theme_minimal() + 
+  theme(legend.position = "bottom") + 
+  ggthemes::scale_colour_ptol() +
+  ggthemes::scale_fill_ptol() + 
+  geom_vline(xintercept = 0,
+             linetype = "dashed")
+plt_diff
+
+# save plot 
+plt_exp_acc <- gridExtra::grid.arrange(plt_group, plt_diff, ncol = 2)
+ggsave(plt_exp_acc, file = "../Figures/Model_output_exp_acc.png",
+       height = 5,
+       width = 13)
+
+
+
+
+#### STAN ####
+#### STAN: binomial ####
 # setup contrasts myself  
 df$motivated <- 0 
 df$motivated[df$group == "motivated"] <- 1
@@ -367,75 +386,19 @@ plt_stan_acc_group <- data.frame(
 
 
 
-#### PROPORTION SIDE ####
-# make a side column 
-df$side <- 1 - df$centre
+# PROPORTION SIDE #
+# # make a side column 
+# df$side <- 1 - df$centre
+# 
+# # make norm delta 
+# df_all<- df_all%>% 
+#   group_by(participant) %>%
+#   mutate(norm_delta = separation/max(separation))
+# 
 
-# make norm delta 
-df_all<- df_all%>% 
-  group_by(participant) %>%
-  mutate(norm_delta = separation/max(separation))
-
-
-
-#### BRMS on expected accuracy ####
-model_data_3 <- df_all%>%
-  group_by(participant, group) %>%
-  summarise(pred_accuracy = mean(accuracy))
-
-# model 
-m_pacc_group <- brm(pred_accuracy ~ group,
-                    data = model_data_3,
-                    family = "beta",
-                    chains = 1,
-                    cores = 1,
-                    iter = 2000,
-                    warmup = 1000)
-
-plt_group <- model_data_3 %>%
-  add_predicted_draws(m_pacc_group) %>%
-  ggplot(aes(.prediction, colour = group, fill = group)) +
-  geom_density(alpha = 0.3) +
-  theme_minimal() +
-  theme(legend.position = "bottom") + 
-  ggthemes::scale_colour_ptol() +
-  ggthemes::scale_fill_ptol()
-plt_group$labels$x <- "Accuracy"
-plt_group$labels$fill <- "Group"
-plt_group$labels$colour <- "Group"
-plt_group
-
-plt_diff <- plt_group[["data"]] %>%
-  ungroup() %>%
-  select(group, .prediction, .draw) %>%
-  group_by(group, .draw) %>%
-  summarise(.prediction = mean(.prediction)) %>%
-  spread(group, .prediction) %>%
-  mutate("Motivated vs Control" = motivated - control,
-         "Optimal vs Motivated" = optimal - motivated,
-         "Optimal vs Control" = optimal - control) %>%
-  select(-control, -motivated, -optimal) %>%
-  gather("Motivated vs Control":"Optimal vs Control",
-         key = "Comparison",
-         value = "Difference") %>%
-  ggplot(aes(Difference, colour = Comparison, fill = Comparison)) + 
-  geom_density(alpha = 0.3) + 
-  theme_minimal() + 
-  theme(legend.position = "bottom") + 
-  ggthemes::scale_colour_ptol() +
-  ggthemes::scale_fill_ptol() + 
-  geom_vline(xintercept = 0,
-             linetype = "dashed")
-plt_diff
-
-# save plot 
-plt_exp_acc <- gridExtra::grid.arrange(plt_group, plt_diff, ncol = 2)
-ggsave(plt_exp_acc, file = "../Figures/Model_output_exp_acc.png",
-       height = 5,
-       width = 13)
-
-
-#### STAN: trying again ####
+#### STAN: Beta ####
+#### STAN: Accuracy ~ group ####
+# replicating the BRMS version essentially
 X <- model.matrix(Accuracy ~ group, data = model_data_2)
 
 model_data_new <- model_data_2 %>%
@@ -486,13 +449,25 @@ make_plt <- function(model_output, dataframe, dist_true){
   return(output)
 }
 
-mu_df <- make_plt(samples$mu, model_data_new, FALSE)
-mu_df$labels$x <- "Predicted Mean Success Rate"
-mu_df$labels$colour <- "Group"
-mu_df$labels$fill <- "Group"
-mu_df
+plt_m_real_acc <- make_plt(samples$mu, model_data_new, FALSE)
+plt_m_real_acc$labels$x <- "Predicted Mean Success Rate"
+plt_m_real_acc$labels$colour <- "Group"
+plt_m_real_acc$labels$fill <- "Group"
+plt_m_real_acc
 
+# save this 
+ggsave(file = "../Figures/Stan_act_acc.png",
+       heigh = 5,
+       width = 5)
 
+# get HPDI 
+HPDI_sag <- plt_m_real_acc[["data"]] %>%
+  group_by(group) %>%
+  summarise(lower = HPDI(pred_mu, 0.95)[1],
+            upper = HPDI(pred_mu, 0.95)[2])
+HPDI_sag
+
+#### STAN: Predicted Accuracy ####
 # same as above but now on expected accuracy
 X <- model.matrix(pred_accuracy ~ group, data = model_data_3)
 
@@ -521,11 +496,23 @@ samples <- rstan::extract(m_stan_group_exp)
 
 # This looks like it works?
 # dists look a lot tighter though 
-mu_df_exp <- make_plt(samples$mu, model_data_new, FALSE)
-mu_df_exp$labels$x <- "Predicted Mean Expected Success Rate"
-mu_df_exp$labels$colour <- "Group"
-mu_df_exp$labels$fill <- "Group"
-mu_df_exp
+plt_m_exp_acc <- make_plt(samples$mu, model_data_new, FALSE)
+plt_m_exp_acc$labels$x <- "Predicted Mean Expected Success Rate"
+plt_m_exp_acc$labels$colour <- "Group"
+plt_m_exp_acc$labels$fill <- "Group"
+plt_m_exp_acc
+
+# save 
+ggsave(file = "../Figures/Stan_exp_acc.png",
+       height = 5,
+       width = 5)
+
+# get HPDI
+HPDI_seg <- plt_m_exp_acc[["data"]] %>%
+  group_by(group) %>%
+  summarise(lower = HPDI(pred_mu, 0.95)[1],
+            upper = HPDI(pred_mu, 0.95)[2])
+HPDI_seg
 
 #### doing the above again with dist_type added? ####
 X <- model.matrix(Accuracy ~ (group + dist_type)^2, data = model_data)
