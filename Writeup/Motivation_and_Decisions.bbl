@@ -11,7 +11,7 @@ brms2017}
 \APACinsertmetastar {%
 brms2017}%
 \begin{APACrefauthors}%
-Bürkner, P\BHBI C.%
+Bürkner, P\BPBI C.%
 \end{APACrefauthors}%
 \unskip\
 \newblock
@@ -37,7 +37,7 @@ brms2018}
 \APACinsertmetastar {%
 brms2018}%
 \begin{APACrefauthors}%
-Bürkner, P\BHBI C.%
+Bürkner, P\BPBI C.%
 \end{APACrefauthors}%
 \unskip\
 \newblock
@@ -50,6 +50,34 @@ Bürkner, P\BHBI C.%
 \APACjournalVolNumPages{The R Journal}{10}{1}{395--411}.
 \newblock
 \begin{APACrefDOI} \doi{10.32614/RJ-2018-017} \end{APACrefDOI}
+\PrintBackRefs{\CurrentBib}
+
+\bibitem [\protect \citeauthoryear {%
+Clarke%
+\ \BBA {} Hunt%
+}{%
+Clarke%
+\ \BBA {} Hunt%
+}{%
+{\protect \APACyear {2016}}%
+}]{%
+clarke2015failure}
+\APACinsertmetastar {%
+clarke2015failure}%
+\begin{APACrefauthors}%
+Clarke, A\BPBI D\BPBI F.%
+\BCBT {}\ \BBA {} Hunt, A\BPBI R.%
+\end{APACrefauthors}%
+\unskip\
+\newblock
+\APACrefYearMonthDay{2016}{}{}.
+\newblock
+{\BBOQ}\APACrefatitle {Failure of intuition when choosing whether to invest in
+  a single goal or split resources between two goals} {Failure of intuition
+  when choosing whether to invest in a single goal or split resources between
+  two goals}.{\BBCQ}
+\newblock
+\APACjournalVolNumPages{Psychological Science}{27}{1}{64-74}.
 \PrintBackRefs{\CurrentBib}
 
 \bibitem [\protect \citeauthoryear {%

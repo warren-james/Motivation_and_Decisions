@@ -462,11 +462,10 @@ samples <- rstan::extract(m_stan_group)
 
 # This looks like it works?
 # dists look a lot tighter though 
-#### function to plot this output ####
+#### function to plot STAN output ####
 make_plt <- function(model_output, dataframe, dist_true){
   output <- as.tibble(model_output) %>%
-    gather(-1,
-           key = "remove",
+    gather(key = "remove",
            value = "pred_mu") %>%
     group_by(remove) %>%
     mutate(row_num = strsplit(remove, split = "V")[[1]][2]) %>%
@@ -552,9 +551,10 @@ m_stan_group_dist <- stan(
 )
 
 samples <- rstan::extract(m_stan_group_dist)
-mu_df_dist <- make_plt(samples$mu, model_data_new, TRUE)
-mu_df_dist$labels$x <- "Predicted Mean Success Rate"
-mu_df_dist$labels$colour <- "Group"
-mu_df_dist$labels$fill <- "Group"
-mu_df_dist
+plt_mu_df_dist <- make_plt(samples$mu, model_data_new, TRUE)
+plt_mu_df_dist$labels$x <- "Predicted Mean Success Rate"
+plt_mu_df_dist$labels$colour <- "Group"
+plt_mu_df_dist$labels$fill <- "Group"
+plt_mu_df_dist
+
 
