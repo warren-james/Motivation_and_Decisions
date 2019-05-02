@@ -5,10 +5,11 @@
 # the transfer paper)
 
 #### Library ####
-library(tidyverse)
 library(brms)
-library(tidybayes)
+library(rethinking)
 library(rstan)
+library(tidybayes)
+library(tidyverse)
 
 #### constants ####
 Screen_dist <- 60
@@ -93,7 +94,6 @@ df_all%>%
   facet_wrap(~type)
 
 
-# sort out other groups too...
 #### ACCURACY ####
 #### brms models ####
 #### using all data: binomial ####
@@ -399,6 +399,11 @@ plt_stan_acc_group <- data.frame(
 #### STAN: Beta ####
 #### STAN: Accuracy ~ group ####
 # replicating the BRMS version essentially
+model_data_2 <- df_all %>%
+  group_by(participant, group) %>%
+  summarise(Accuracy = mean(correct)) %>%
+  mutate(Accuracy = (Accuracy + 1e-5)*0.9999) 
+
 X <- model.matrix(Accuracy ~ group, data = model_data_2)
 
 model_data_new <- model_data_2 %>%
@@ -426,6 +431,7 @@ samples <- rstan::extract(m_stan_group)
 # This looks like it works?
 # dists look a lot tighter though 
 #### function to plot STAN output ####
+# for plotting mean estimates
 make_plt <- function(model_output, dataframe, dist_true){
   output <- as.tibble(model_output) %>%
     gather(key = "remove",
@@ -456,19 +462,44 @@ plt_m_real_acc$labels$fill <- "Group"
 plt_m_real_acc
 
 # save this 
-ggsave(file = "../Figures/Stan_act_acc.png",
-       heigh = 5,
-       width = 5)
+# ggsave(file = "../Figures/Stan_act_acc.png",
+#        heigh = 5,
+#        width = 5)
 
 # get HPDI 
 HPDI_sag <- plt_m_real_acc[["data"]] %>%
   group_by(group) %>%
-  summarise(lower = HPDI(pred_mu, 0.95)[1],
+  summarise(mean_est = mean(pred_mu),
+            lower = HPDI(pred_mu, 0.95)[1],
             upper = HPDI(pred_mu, 0.95)[2])
 HPDI_sag
 
+#### posterior predictions function ####
+post_preds <- function(m, pred_dat, x){
+  post <- rstan::extract(m)
+  
+  beta <- colMeans(post$beta)
+  gamma <- colMeans(post$gamma)
+  
+  mu  <- plogis(X %*% beta)
+  phi <- exp(X %*% gamma)
+  
+  A <- mu * phi 
+  B <- (1 - mu) * phi
+  
+  n <- length(x)
+  
+  p <- unlist(map2(A, B, dbeta, x = x))
+  
+  return(p)
+}
+
 #### STAN: Predicted Accuracy ####
 # same as above but now on expected accuracy
+model_data_3 <- df_all%>%
+  group_by(participant, group) %>%
+  summarise(pred_accuracy = mean(accuracy))
+
 X <- model.matrix(pred_accuracy ~ group, data = model_data_3)
 
 # setup data for plotting
@@ -503,18 +534,25 @@ plt_m_exp_acc$labels$fill <- "Group"
 plt_m_exp_acc
 
 # save 
-ggsave(file = "../Figures/Stan_exp_acc.png",
-       height = 5,
-       width = 5)
+# ggsave(file = "../Figures/Stan_exp_acc.png",
+#        height = 5,
+#        width = 5)
 
 # get HPDI
 HPDI_seg <- plt_m_exp_acc[["data"]] %>%
   group_by(group) %>%
-  summarise(lower = HPDI(pred_mu, 0.95)[1],
+  summarise(mean_est = mean(pred_mu),
+            lower = HPDI(pred_mu, 0.95)[1],
             upper = HPDI(pred_mu, 0.95)[2])
 HPDI_seg
 
-#### doing the above again with dist_type added? ####
+#### STAN: add in dist_type ####
+#### STAN: Actual Accuracy ####
+model_data <- df_all %>% 
+  group_by(participant, dist_type, group) %>%
+  summarise(Accuracy = mean(correct)) %>%
+  mutate(Accuracy = (Accuracy + 1e-5)*0.9999)
+
 X <- model.matrix(Accuracy ~ (group + dist_type)^2, data = model_data)
 
 model_data_new <- model_data %>%
@@ -544,4 +582,51 @@ plt_mu_df_dist$labels$colour <- "Group"
 plt_mu_df_dist$labels$fill <- "Group"
 plt_mu_df_dist
 
+# HPDI 
+HPDI_sag_d <- plt_mu_df_dist[["data"]] %>%
+  group_by(dist_type, group) %>%
+  summarise(mean_est = mean(pred_mu),
+            lower = HPDI(pred_mu, 0.95)[1],
+            upper = HPDI(pred_mu, 0.95)[2])
+HPDI_sag_d
 
+
+#### STAN: Expected Accuracy and dist_type ####
+model_data_new <- df_all %>% 
+  group_by(participant, group, dist_type) %>%
+  summarise(pred_accuracy = mean(accuracy)) %>%
+  ungroup() %>%
+  rownames_to_column(var = "row_num")
+
+X <- model.matrix(pred_accuracy ~ (group + dist_type)^2, data = model_data_new)
+
+stan_df <- list(
+  N = nrow(model_data),
+  K = ncol(X),
+  y = model_data_new$pred_accuracy,
+  X = X
+)
+
+m_stan_group_dist_exp <- stan(
+  file = "modelling/models/stan_model.stan",
+  data = stan_df,
+  chains = 1,
+  warmup = 1000,
+  iter = 2000,
+  refresh = 100
+)
+
+samples <- rstan::extract(m_stan_group_dist_exp)
+plt_mu_df_dist_exp <- make_plt(samples$mu, model_data_new, TRUE)
+plt_mu_df_dist_exp$labels$x <- "Predicted Estimated Mean Success Rate"
+plt_mu_df_dist_exp$labels$colour <- "Group"
+plt_mu_df_dist_exp$labels$fill <- "Group"
+plt_mu_df_dist_exp
+
+# HPDI 
+HPDI_seg_d <- plt_mu_df_dist[["data"]] %>%
+  group_by(dist_type, group) %>%
+  summarise(mean_est = mean(pred_mu),
+            lower = HPDI(pred_mu, 0.95)[1],
+            upper = HPDI(pred_mu, 0.95)[2])
+HPDI_seg_d

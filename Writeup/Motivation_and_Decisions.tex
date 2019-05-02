@@ -8,6 +8,7 @@
 \usepackage[autostyle, english = american]{csquotes}
 \MakeOuterQuote{"}  % the previous lines make it so that the quotation marks all appear the right way around 
 
+\usepackage{tabto}
 %\usepackage{listings} %for inserting R scripts
 %\usepackage{verbatimbox}
 
@@ -86,7 +87,7 @@
 
 \subsection*{Participants}
 \addcontentsline{toc}{subsection}{Participants}
-\paragraph{} Participants were recruited via word of mouth at the University of Aberdeen. \textit{Participant data is missing; I have details for 18 participants but there were 19 in the dataset. I'm assuming participant 25 was excluded as they only did 3 blocks instead of the full 4?} In total, 18 participants took part in the experiment (13 female) with an age range of 20-23 (mean of 20). 
+\paragraph{} Participants were recruited via word of mouth at the University of Aberdeen. In total, 18 participants took part in the experiment (13 female) with an age range of 20-23 (mean of 20). 
 
 \subsection*{Procedure}
 \addcontentsline{toc}{subsection}{Procedure}
@@ -117,7 +118,7 @@
 
 \paragraph{} From an intial inspection of Figure \ref{fig:Position_raw}, participants in the motivated group do not appear to be doing anything different to those in the Control group. They certainly do not look as though they have been instructed as to where to look if one compares their results to the Optimal group. 
 
-\paragraph{} \textit{I do have model results for this... but I imagine this can be added to the supplementary material?}
+\paragraph{} \textit{I do have model results for this... but I imagine this can be added to the supplementary material? Also, it's pretty uniformative as to what's happening and doesn't add more to what can already be seen in the figure anyway}
 
 \begin{figure}[ht!]
 	\includegraphics[scale=0.7]{../Figures/Part_2_all_groups.png}
@@ -140,16 +141,15 @@
 	\label{fig:Model_raw_acc}
 \end{figure}
 
-\paragraph{} In Figure \ref{fig:Model_raw_acc}, it can bee seen that that the Motivated group were generally more successful than the Control group. However they did not reach the same level of success as the optimal group. 
+\paragraph{} In Figure \ref{fig:Model_raw_acc}, it can bee seen that that the Motivated group were generally more successful than the Control group. The Control group had a predicted mean rate of success of $0.708$ with a 95\% HPDI of $|0.661, 0.747|$, and the Motivated group had a mean of $0.764$ with a 95\% HPDI of $|0.74, 0.789|$. However they did not reach the same level of success as the optimal group which had a mean success rate of $0.825$ with a 95\% HPDI of $|0.805, 0.844|$. 
 
 \paragraph{} This result seems somewhat surprising given the fixation proportions that can be observed in Figure \ref{fig:Position_raw}. As such, additional analyses were carried out.
 
 \subsection*{Expected Rate of Success}
 \paragraph{} In order to make a fairer comparison of the groups, each participant's expected success rate was calculated given the fixations choices they had made on each trial. For example, if the boxes were far apart and the participant had fixated one of the side boxes on that trial, they would have a $\approx$100\% chance of success at the fixated box (b$_f$) and $\approx$50\% chance of success at the non-fixated box (b$_{nf}$) as this would be imperceptable but they would have a 50\% ($c$) chance due to the nature of the task. Each of these boxes would be equally likely to contain the target and so the expected chance of success on a trial like this would be 75\% which is given by calculating $(b_f + b_{nf})\times c$. This was calculated for each participant, on each trial. This was then averaged for each participant to give an average expected accuracy. 
 
-\paragraph{} After accounting for chance, the difference that was once observed when modelling participant's raw success rate (Figure \ref{fig:Model_raw_acc}) appeared to entirely dissapear. Inspecting Figure \ref{fig:Model_exp_acc} would demonstrate that participants in the Motivated and Control groups almost identical expected success rates as can be seen by the almost entirely overlapping posterior predictions. These results would suggest that the previously greater rate of success experienced by the Motivated group was not due to them making better, strategical decisions about where to fixate. Instead, this greater rate of success would appear to be due to something other than a more optimal strategy being utilised. 
+\paragraph{} After accounting for chance, the difference that was once observed when modelling participant's raw success rate (Figure \ref{fig:Model_raw_acc}) appeared to entirely dissapear. Inspecting Figure \ref{fig:Model_exp_acc} would demonstrate that participants in the Motivated (mean of $0.735$, 95\% HPDI of $|0.715, 0.754|$) and Control (mean of $0.732$, 95\% HPDI of $|0.706, 0.755|$) groups almost identical expected success rates as can be seen by the almost entirely overlapping posterior predictions. These results would suggest that the previously greater rate of success experienced by the Motivated group was not due to them making better, strategical decisions about where to fixate. Instead, this greater rate of success would appear to be due to something other than a more optimal strategy being utilised. 
 
-\paragraph{} \textit{Probably need to make some mention of actual numbers from the output when talking about the models...?}
 
 \begin{figure}[ht!]
 	\includegraphics[scale=1]{../Figures/Stan_exp_acc.png}
