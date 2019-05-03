@@ -23,6 +23,48 @@ get_VisDegs <- function(size,distance){
   ((2*atan2(size,(2*distance)))*180)/pi
 }
 
+# get posterior preds for beta dist 
+post_preds_beta <- function(m, x, m_matrix){
+  post <- rstan::extract(m)
+  
+  beta <- colMeans(post$beta)
+  gamma <- colMeans(post$gamma)
+  
+  mu  <- plogis(m_matrix %*% beta)
+  phi <- exp(m_matrix %*% gamma)
+  
+  A <- mu * phi 
+  B <- (1 - mu) * phi
+  
+  p <- unlist(map2(A, B, dbeta, x = x_vals))
+  
+  return(p)
+}
+
+# plotting mean output from stan
+make_plt <- function(model_output, dataframe, dist_true){
+  output <- as.tibble(model_output) %>%
+    gather(key = "remove",
+           value = "pred_mu") %>%
+    group_by(remove) %>%
+    mutate(row_num = strsplit(remove, split = "V")[[1]][2]) %>%
+    ungroup() %>%
+    select(-remove) %>%
+    merge(dataframe) %>%
+    ggplot(aes(pred_mu,
+               colour = group,
+               fill = group)) + 
+    geom_density(alpha = 0.3) + 
+    theme_minimal() + 
+    theme(legend.position = "bottom") + 
+    ggthemes::scale_color_ptol() + 
+    ggthemes::scale_fill_ptol()
+  if(dist_true == T){
+    output <- output + facet_wrap(~dist_type)
+  }
+  return(output)
+}
+
 #### load in data ####
 load("scratch/all_data")
 df_all <- df
@@ -404,16 +446,16 @@ model_data_2 <- df_all %>%
   summarise(Accuracy = mean(correct)) %>%
   mutate(Accuracy = (Accuracy + 1e-5)*0.9999) 
 
-X <- model.matrix(Accuracy ~ group, data = model_data_2)
+m_matrix <- model.matrix(Accuracy ~ group, data = model_data_2)
 
 model_data_new <- model_data_2 %>%
   rownames_to_column(var = "row_num")
 
 stan_df <- list(
   N = nrow(model_data_2),
-  K = ncol(X),
+  K = ncol(m_matrix),
   y = model_data_2$Accuracy,
-  X = X
+  X = m_matrix
 )
 
 m_stan_group <- stan(
@@ -425,41 +467,15 @@ m_stan_group <- stan(
   refresh = 100
 )
 
-
+# extract samples
 samples <- rstan::extract(m_stan_group)
 
-# This looks like it works?
-# dists look a lot tighter though 
-#### function to plot STAN output ####
-# for plotting mean estimates
-make_plt <- function(model_output, dataframe, dist_true){
-  output <- as.tibble(model_output) %>%
-    gather(key = "remove",
-           value = "pred_mu") %>%
-    group_by(remove) %>%
-    mutate(row_num = strsplit(remove, split = "V")[[1]][2]) %>%
-    ungroup() %>%
-    select(-remove) %>%
-    merge(dataframe) %>%
-    ggplot(aes(pred_mu,
-               colour = group,
-               fill = group)) + 
-    geom_density(alpha = 0.3) + 
-    theme_minimal() + 
-    theme(legend.position = "bottom") + 
-    ggthemes::scale_color_ptol() + 
-    ggthemes::scale_fill_ptol()
-  if(dist_true == T){
-    output <- output + facet_wrap(~dist_type)
-  }
-  return(output)
-}
-
-plt_m_real_acc <- make_plt(samples$mu, model_data_new, FALSE)
-plt_m_real_acc$labels$x <- "Predicted Mean Success Rate"
-plt_m_real_acc$labels$colour <- "Group"
-plt_m_real_acc$labels$fill <- "Group"
-plt_m_real_acc
+# plt means only 
+# plt_m_real_acc <- make_plt(samples$mu, model_data_new, FALSE)
+# plt_m_real_acc$labels$x <- "Predicted Mean Success Rate"
+# plt_m_real_acc$labels$colour <- "Group"
+# plt_m_real_acc$labels$fill <- "Group"
+# plt_m_real_acc
 
 # save this 
 # ggsave(file = "../Figures/Stan_act_acc.png",
@@ -467,32 +483,91 @@ plt_m_real_acc
 #        width = 5)
 
 # get HPDI 
-HPDI_sag <- plt_m_real_acc[["data"]] %>%
-  group_by(group) %>%
-  summarise(mean_est = mean(pred_mu),
-            lower = HPDI(pred_mu, 0.95)[1],
-            upper = HPDI(pred_mu, 0.95)[2])
-HPDI_sag
+# HPDI_sag <- plt_m_real_acc[["data"]] %>%
+#   group_by(group) %>%
+#   summarise(mean_est = mean(pred_mu),
+#             lower = HPDI(pred_mu, 0.95)[1],
+#             upper = HPDI(pred_mu, 0.95)[2])
+# HPDI_sag
 
-#### posterior predictions function ####
-post_preds <- function(m, pred_dat, x){
-  post <- rstan::extract(m)
-  
-  beta <- colMeans(post$beta)
-  gamma <- colMeans(post$gamma)
-  
-  mu  <- plogis(X %*% beta)
-  phi <- exp(X %*% gamma)
-  
-  A <- mu * phi 
-  B <- (1 - mu) * phi
-  
-  n <- length(x)
-  
-  p <- unlist(map2(A, B, dbeta, x = x))
-  
-  return(p)
+
+# posterior_preds
+# setup effects
+X <- tibble(intercept = c(1,1,1),
+            motivated = c(0,1,0),
+            optimal = c(0,0,1))
+X <- as.matrix(X)
+
+# sequence to estimate likelihood 
+x_vals <- seq(0,1,0.0001)
+
+# plt posterior
+plt_posterior <- tibble(
+  Group = rep(unique(model_data_2$group), each = length(x_vals)),
+  x = rep(x_vals, 3),
+  p = post_preds_beta(m_stan_group, x_vals, X)) %>%
+  ggplot(aes(x, p, colour = Group, fill = Group)) + 
+  #geom_line(aes(group = Group)) +
+  geom_area(position = "dodge", alpha = 0.3) +
+  theme_minimal() + 
+  scale_x_continuous(limits = c(0.5, 0.9)) + 
+  ggthemes::scale_color_ptol() + 
+  ggthemes::scale_fill_ptol() + 
+  theme(legend.position = "bottom")
+plt_posterior$labels$x <- "Predicted Mean Accuracy"
+plt_posterior$labels$y <- "density"
+plt_posterior
+
+# save 
+ggsave("../Figures/Model_stan_rawacc.png",
+       height = 5,
+       width = 8)
+
+
+# work on HPDI stuff again 
+mu <- array(0, dim = c(nrow(samples$beta), nrow(X)))
+for (ii in 1:nrow(samples$beta)) {
+  mu[ii, ] <- plogis(X %*% samples$beta[ii, ])
 }
+
+hpdi <- as.tibble(t(purrr::map_df(as.tibble(mu), HPDI, prob = 0.95))) %>%
+  cbind(tibble(group = c("control", "motivated", "optimal"))) %>%
+  `colnames<-`(c("lower", "upper", "group")) %>%
+  select(group, lower, upper)
+hpdi
+
+# looking at differences 
+plt_diff <- tibble(control = mu[,1],
+                     motivated = mu[,2],
+                     optimal = mu[,3]) %>%
+  mutate("Motivated - Control" = motivated - control,
+         "Optimal - Control" = optimal - control,
+         "Optimal - Motive" = optimal - motivated) %>%
+  select(-control, 
+         -motivated,
+         -optimal) %>%
+  gather(key = "Comparison",
+         value = "Difference") %>%
+  ggplot(aes(Difference,
+             colour = Comparison,
+             fill = Comparison)) +
+  geom_density(alpha = 0.3) +
+  geom_vline(xintercept = 0,
+             linetype = "dashed") +
+  ggthemes::scale_color_ptol() + 
+  ggthemes::scale_fill_ptol() + 
+  theme_minimal() + 
+  theme(legend.position = "bottom")
+plt_diff
+
+
+# side by side for paper 
+plt_save <- gridExtra::grid.arrange(plt_posterior, plt_diff, ncol = 2)
+ggsave(plt_save, file = "../Figures/Model_stan_rawacc_compare.png",
+       height = 5,
+       width = 13)
+
+
 
 #### STAN: Predicted Accuracy ####
 # same as above but now on expected accuracy
@@ -500,7 +575,7 @@ model_data_3 <- df_all%>%
   group_by(participant, group) %>%
   summarise(pred_accuracy = mean(accuracy))
 
-X <- model.matrix(pred_accuracy ~ group, data = model_data_3)
+m_matrix <- model.matrix(pred_accuracy ~ group, data = model_data_3)
 
 # setup data for plotting
 model_data_new <- model_data_3 %>%
@@ -508,9 +583,9 @@ model_data_new <- model_data_3 %>%
 
 stan_df <- list(
   N = nrow(model_data_3),
-  K = ncol(X),
+  K = ncol(m_matrix),
   y = model_data_3$pred_accuracy,
-  X = X
+  X = m_matrix
 )
 
 m_stan_group_exp <- stan(
@@ -522,16 +597,15 @@ m_stan_group_exp <- stan(
   refresh = 100
 )
 
-
+# extract samples
 samples <- rstan::extract(m_stan_group_exp)
 
-# This looks like it works?
-# dists look a lot tighter though 
-plt_m_exp_acc <- make_plt(samples$mu, model_data_new, FALSE)
-plt_m_exp_acc$labels$x <- "Predicted Mean Expected Success Rate"
-plt_m_exp_acc$labels$colour <- "Group"
-plt_m_exp_acc$labels$fill <- "Group"
-plt_m_exp_acc
+# just plots means, not posterior predictions
+# plt_m_exp_acc <- make_plt(samples$mu, model_data_new, FALSE)
+# plt_m_exp_acc$labels$x <- "Predicted Mean Expected Success Rate"
+# plt_m_exp_acc$labels$colour <- "Group"
+# plt_m_exp_acc$labels$fill <- "Group"
+# plt_m_exp_acc
 
 # save 
 # ggsave(file = "../Figures/Stan_exp_acc.png",
@@ -539,12 +613,86 @@ plt_m_exp_acc
 #        width = 5)
 
 # get HPDI
-HPDI_seg <- plt_m_exp_acc[["data"]] %>%
-  group_by(group) %>%
-  summarise(mean_est = mean(pred_mu),
-            lower = HPDI(pred_mu, 0.95)[1],
-            upper = HPDI(pred_mu, 0.95)[2])
-HPDI_seg
+# HPDI_seg <- plt_m_exp_acc[["data"]] %>%
+#   group_by(group) %>%
+#   summarise(mean_est = mean(pred_mu),
+#             lower = HPDI(pred_mu, 0.95)[1],
+#             upper = HPDI(pred_mu, 0.95)[2])
+# HPDI_seg
+
+# setup effs
+X <- tibble(intercept = c(1,1,1),
+            motivated = c(0,1,0),
+            optimal = c(0,0,1))
+X <- as.matrix(X)
+
+# sequence to estimate likelihood 
+x_vals <- seq(0,1,0.0001)
+
+# plt posterior
+plt_posterior <- tibble(
+  Group = rep(unique(model_data_3$group), each = length(x_vals)),
+  x = rep(x_vals, 3),
+  p = post_preds_beta(m_stan_group_exp, x_vals, X)) %>%
+  ggplot(aes(x, p, colour = Group, fill = Group)) + 
+  #geom_line(aes(group = Group)) +
+  geom_area(position = "dodge", alpha = 0.3) +
+  theme_minimal() + 
+  scale_x_continuous(limits = c(0.5, 0.9)) + 
+  ggthemes::scale_color_ptol() + 
+  ggthemes::scale_fill_ptol() + 
+  theme(legend.position = "bottom")
+plt_posterior$labels$x <- "Predicted Mean Expected Accuracy"
+plt_posterior$labels$y <- "density"
+plt_posterior
+
+# save 
+ggsave("../Figures/Model_stan_expacc.png",
+       height = 5,
+       width = 8)
+
+# work on HPDI stuff again 
+mu <- array(0, dim = c(nrow(samples$beta), nrow(X)))
+for (ii in 1:nrow(samples$beta)) {
+  mu[ii, ] <- plogis(X %*% samples$beta[ii, ])
+}
+
+hpdi <- as.tibble(t(purrr::map_df(as.tibble(mu), HPDI, prob = 0.95))) %>%
+  cbind(tibble(group = c("control", "motivated", "optimal"))) %>%
+  `colnames<-`(c("lower", "upper", "group")) %>%
+  select(group, lower, upper)
+hpdi
+
+# looking at differences 
+plt_diff <- tibble(control = mu[,1],
+                   motivated = mu[,2],
+                   optimal = mu[,3]) %>%
+  mutate("Motivated - Control" = motivated - control,
+         "Optimal - Control" = optimal - control,
+         "Optimal - Motive" = optimal - motivated) %>%
+  select(-control, 
+         -motivated,
+         -optimal) %>%
+  gather(key = "Comparison",
+         value = "Difference") %>%
+  ggplot(aes(Difference,
+             colour = Comparison,
+             fill = Comparison)) +
+  geom_density(alpha = 0.3) +
+  geom_vline(xintercept = 0,
+             linetype = "dashed") +
+  ggthemes::scale_color_ptol() + 
+  ggthemes::scale_fill_ptol() + 
+  theme_minimal() + 
+  theme(legend.position = "bottom")
+plt_diff
+
+# side by side for paper 
+plt_save <- gridExtra::grid.arrange(plt_posterior, plt_diff, ncol = 2)
+ggsave(plt_save, file = "../Figures/Model_stan_expacc_compare.png",
+       height = 5,
+       width = 13)
+
 
 #### STAN: add in dist_type ####
 #### STAN: Actual Accuracy ####
@@ -553,16 +701,16 @@ model_data <- df_all %>%
   summarise(Accuracy = mean(correct)) %>%
   mutate(Accuracy = (Accuracy + 1e-5)*0.9999)
 
-X <- model.matrix(Accuracy ~ (group + dist_type)^2, data = model_data)
+m_matrix <- model.matrix(Accuracy ~ (group + dist_type)^2, data = model_data)
 
 model_data_new <- model_data %>%
   rownames_to_column(var = "row_num")
 
 stan_df <- list(
   N = nrow(model_data),
-  K = ncol(X),
+  K = ncol(m_matrix),
   y = model_data$Accuracy,
-  X = X
+  X = m_matrix
 )
 
 
@@ -598,13 +746,13 @@ model_data_new <- df_all %>%
   ungroup() %>%
   rownames_to_column(var = "row_num")
 
-X <- model.matrix(pred_accuracy ~ (group + dist_type)^2, data = model_data_new)
+m_matrix <- model.matrix(pred_accuracy ~ (group + dist_type)^2, data = model_data_new)
 
 stan_df <- list(
   N = nrow(model_data),
-  K = ncol(X),
+  K = ncol(m_matrix),
   y = model_data_new$pred_accuracy,
-  X = X
+  X = m_matrix
 )
 
 m_stan_group_dist_exp <- stan(
@@ -630,3 +778,6 @@ HPDI_seg_d <- plt_mu_df_dist[["data"]] %>%
             lower = HPDI(pred_mu, 0.95)[1],
             upper = HPDI(pred_mu, 0.95)[2])
 HPDI_seg_d
+
+
+
