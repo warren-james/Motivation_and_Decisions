@@ -65,6 +65,7 @@ make_plt <- function(model_output, dataframe, dist_true){
   return(output)
 }
 
+
 #### load in data ####
 load("scratch/all_data")
 df_all <- df
@@ -133,7 +134,7 @@ df_all%>%
   ggplot(aes(accuracy, colour = group, fill = group)) + 
   geom_density(alpha = 0.3) + 
   theme_minimal() +
-  facet_wrap(~type)
+  facet_wrap(~type) 
 
 
 #### ACCURACY ####
@@ -441,20 +442,20 @@ plt_stan_acc_group <- data.frame(
 #### STAN: Beta ####
 #### STAN: Accuracy ~ group ####
 # replicating the BRMS version essentially
-model_data_2 <- df_all %>%
+model_data_2 <- df_all%>%
   group_by(participant, group) %>%
-  summarise(Accuracy = mean(correct)) %>%
-  mutate(Accuracy = (Accuracy + 1e-5)*0.9999) 
+  summarise(accuracy = mean(correct))
 
-m_matrix <- model.matrix(Accuracy ~ group, data = model_data_2)
+m_matrix <- model.matrix(accuracy ~ group, data = model_data_2)
 
+# setup data for plotting
 model_data_new <- model_data_2 %>%
   rownames_to_column(var = "row_num")
 
 stan_df <- list(
   N = nrow(model_data_2),
   K = ncol(m_matrix),
-  y = model_data_2$Accuracy,
+  y = model_data_2$accuracy,
   X = m_matrix
 )
 
@@ -567,6 +568,19 @@ ggsave(plt_save, file = "../Figures/Model_stan_rawacc_compare.png",
        height = 5,
        width = 13)
 
+# compare with real data
+plt_both <- model_data_2 %>% 
+  ggplot(aes(accuracy, colour = group, fill = group)) + 
+  geom_histogram(position = "identity",
+                 bins = 20,
+                 alpha = 0.4) + 
+  theme_minimal() + 
+  theme(legend.position = "bottom") + 
+  ggthemes::scale_color_ptol() + 
+  ggthemes::scale_fill_ptol() 
+plt_both
+
+plt_both <- gridExtra::grid.arrange(plt_both, plt_posterior, nrow = 2)
 
 
 #### STAN: Predicted Accuracy ####
@@ -765,11 +779,13 @@ m_stan_group_dist_exp <- stan(
 )
 
 samples <- rstan::extract(m_stan_group_dist_exp)
-plt_mu_df_dist_exp <- make_plt(samples$mu, model_data_new, TRUE)
-plt_mu_df_dist_exp$labels$x <- "Predicted Estimated Mean Success Rate"
-plt_mu_df_dist_exp$labels$colour <- "Group"
-plt_mu_df_dist_exp$labels$fill <- "Group"
-plt_mu_df_dist_exp
+
+# this just plots the mean
+# plt_mu_df_dist_exp <- make_plt(samples$mu, model_data_new, TRUE)
+# plt_mu_df_dist_exp$labels$x <- "Predicted Estimated Mean Success Rate"
+# plt_mu_df_dist_exp$labels$colour <- "Group"
+# plt_mu_df_dist_exp$labels$fill <- "Group"
+# plt_mu_df_dist_exp
 
 # HPDI 
 HPDI_seg_d <- plt_mu_df_dist[["data"]] %>%
