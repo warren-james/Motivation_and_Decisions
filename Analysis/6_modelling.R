@@ -41,6 +41,7 @@ post_preds_beta <- function(m, x, m_matrix){
   return(p)
 }
 
+
 # plotting mean output from stan
 make_plt <- function(model_output, dataframe, dist_true){
   output <- as.tibble(model_output) %>%
@@ -500,22 +501,23 @@ X <- tibble(intercept = c(1,1,1),
 X <- as.matrix(X)
 
 # sequence to estimate likelihood 
-x_vals <- seq(0,1,0.0001)
+x_vals <- seq(0,1-0.001,0.001)
 
 # plt posterior
 plt_posterior <- tibble(
-  Group = rep(unique(model_data_2$group), each = length(x_vals)),
+  group = rep(unique(model_data_2$group), each = length(x_vals)),
   x = rep(x_vals, 3),
   p = post_preds_beta(m_stan_group, x_vals, X)) %>%
-  ggplot(aes(x, p, colour = Group, fill = Group)) + 
+  ggplot(aes(x, p, colour = group, fill = group)) + 
   #geom_line(aes(group = Group)) +
   geom_area(position = "dodge", alpha = 0.3) +
   theme_minimal() + 
   scale_x_continuous(limits = c(0.5, 0.9)) + 
+  scale_y_continuous(breaks = c(seq(0,15,5))) +
   ggthemes::scale_color_ptol() + 
   ggthemes::scale_fill_ptol() + 
   theme(legend.position = "bottom")
-plt_posterior$labels$x <- "Predicted Mean Accuracy"
+plt_posterior$labels$x <- "Posterior Distribution"
 plt_posterior$labels$y <- "density"
 plt_posterior
 
@@ -531,11 +533,36 @@ for (ii in 1:nrow(samples$beta)) {
   mu[ii, ] <- plogis(X %*% samples$beta[ii, ])
 }
 
-hpdi <- as.tibble(t(purrr::map_df(as.tibble(mu), HPDI, prob = 0.95))) %>%
+# needs rethinking... must be another way to do this?
+# hpdi <- as.tibble(t(purrr::map_df(as.tibble(mu), HPDI, prob = 0.95))) %>%
+#   cbind(tibble(group = c("control", "motivated", "optimal"))) %>%
+#   `colnames<-`(c("lower", "upper", "group")) %>%
+#   select(group, lower, upper)
+# hpdi
+
+# version 2 
+hpdi_2 <- as.tibble(t(purrr::map_df(as.tibble(mu), HDInterval::hdi))) %>%
   cbind(tibble(group = c("control", "motivated", "optimal"))) %>%
   `colnames<-`(c("lower", "upper", "group")) %>%
   select(group, lower, upper)
-hpdi
+hpdi_2
+
+# new plot 
+plt_again <- merge(plt_posterior[["data"]], hpdi_2) %>%
+  filter(group == "control") %>%
+  ggplot(aes(x, p,
+             colour = group,
+             fill = group)) + 
+  geom_line() + 
+  geom_area(position = "dodge",
+            alpha = 0.3,
+            mapping = aes(x = ifelse(x >= lower & x <= upper, x, 0)))
+
+plt_posterior[["data"]] %>%
+  ggplot(aes(x, p,
+             colour = group)) + 
+  geom_line() + 
+  geom_area(data = hpdi_2)
 
 # looking at differences 
 plt_diff <- tibble(control = mu[,1],
@@ -569,7 +596,7 @@ ggsave(plt_save, file = "../Figures/Model_stan_rawacc_compare.png",
        width = 13)
 
 # compare with real data
-plt_both <- model_data_2 %>% 
+plt_real <- model_data_2 %>% 
   ggplot(aes(accuracy, colour = group, fill = group)) + 
   geom_histogram(position = "identity",
                  bins = 20,
@@ -578,9 +605,24 @@ plt_both <- model_data_2 %>%
   theme(legend.position = "bottom") + 
   ggthemes::scale_color_ptol() + 
   ggthemes::scale_fill_ptol() 
-plt_both
+plt_real
 
-plt_both <- gridExtra::grid.arrange(plt_both, plt_posterior, nrow = 2)
+plt_both <- gridExtra::grid.arrange(plt_real, plt_posterior, nrow = 2)
+
+# means and posterior 
+plt_mu <- tibble(control = mu[,1],
+                 motivated = mu[,2],
+                 optimal = mu[,3]) %>%
+  gather(key = "group",
+         value = "mu") %>%
+  ggplot(aes(mu, colour = group, fill = group)) + 
+  geom_density(alpha = 0.3) + 
+  theme_minimal() + 
+  theme(legend.position = "bottom") + 
+  scale_x_continuous(limits = c(0.5,0.9)) +
+  ggthemes::scale_colour_ptol() + 
+  ggthemes::scale_fill_ptol()
+plt_mu
 
 
 #### STAN: Predicted Accuracy ####
