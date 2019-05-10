@@ -23,6 +23,6 @@
 \contentsline {paragraph}{}{7}{section*.30}% 
 \contentsline {paragraph}{}{7}{section*.32}% 
 \contentsline {paragraph}{}{8}{section*.33}% 
-\contentsline {section}{Discussion}{9}{section*.35}% 
-\contentsline {section}{Conclusion}{9}{section*.36}% 
-\contentsline {section}{References}{10}{section*.36}% 
+\contentsline {section}{Discussion}{8}{section*.35}% 
+\contentsline {section}{Conclusion}{8}{section*.36}% 
+\contentsline {section}{References}{9}{section*.36}% 

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (MiKTeX 2.9.7000 64-bit) (preloaded format=pdflatex 2019.4.29)  30 APR 2019 12:31
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (MiKTeX 2.9.7000 64-bit) (preloaded format=pdflatex 2019.4.29)  10 MAY 2019 11:29
 entering extended mode
 **./Motivation_and_Decisions.tex
 (Motivation_and_Decisions.tex
@@ -550,26 +550,27 @@ Overfull \hbox (22.18971pt too wide) in paragraph at lines 124--127
  []
 
 [5]
-<../Figures/Stan_act_acc.png, id=117, 361.35pt x 361.35pt>
-File: ../Figures/Stan_act_acc.png Graphic file (type png)
-<use ../Figures/Stan_act_acc.png>
-Package pdftex.def Info: ../Figures/Stan_act_acc.png  used on input line 137.
-(pdftex.def)             Requested size: 361.34912pt x 361.34912pt.
- [6 <../Figures/Part_2_all_groups.png>] [7 <../Figures/Stan_act_acc.png>]
-<../Figures/Stan_exp_acc.png, id=140, 361.35pt x 361.35pt>
-File: ../Figures/Stan_exp_acc.png Graphic file (type png)
-<use ../Figures/Stan_exp_acc.png>
-Package pdftex.def Info: ../Figures/Stan_exp_acc.png  used on input line 155.
-(pdftex.def)             Requested size: 361.34912pt x 361.34912pt.
-
-[8 <../Figures/Stan_exp_acc.png>] [9] (Motivation_and_Decisions.bbl)
+<../Figures/Model_stan_rawacc.png, id=117, 578.16pt x 361.35pt>
+File: ../Figures/Model_stan_rawacc.png Graphic file (type png)
+<use ../Figures/Model_stan_rawacc.png>
+Package pdftex.def Info: ../Figures/Model_stan_rawacc.png  used on input line 1
+37.
+(pdftex.def)             Requested size: 462.52863pt x 289.0804pt.
+ [6 <../Figures/Part_2_all_groups.png>] [7 <../Figures/Model_stan_rawacc.png>]
+<../Figures/Model_stan_expacc.png, id=140, 578.16pt x 361.35pt>
+File: ../Figures/Model_stan_expacc.png Graphic file (type png)
+<use ../Figures/Model_stan_expacc.png>
+Package pdftex.def Info: ../Figures/Model_stan_expacc.png  used on input line 1
+55.
+(pdftex.def)             Requested size: 462.52863pt x 289.0804pt.
+ [8 <../Figures/Model_stan_expacc.png>] (Motivation_and_Decisions.bbl)
 Package atveryend Info: Empty hook `BeforeClearDocument' on input line 177.
- [10
+
+[9
 
 ]
 Package atveryend Info: Empty hook `AfterLastShipout' on input line 177.
-
-(Motivation_and_Decisions.aux)
+ (Motivation_and_Decisions.aux)
 Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 177.
 Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 177.
 Package rerunfilecheck Info: File `Motivation_and_Decisions.out' has not change
@@ -577,8 +578,8 @@ d.
 (rerunfilecheck)             Checksum: 0482D35EC6CAB0543E11F9DF5144800A;397.
  ) 
 Here is how much of TeX's memory you used:
- 9650 strings out of 492897
- 147339 string characters out of 3123754
+ 9649 strings out of 492897
+ 147382 string characters out of 3123754
  274813 words of memory out of 3000000
  13396 multiletter control sequences out of 15000+200000
  9782 words of font info for 35 fonts, out of 3000000 for 9000
@@ -596,9 +597,9 @@ b><C:/Users/warre/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/public/amsfonts
 blic/amsfonts/cm/cmsy8.pfb><C:/Users/warre/AppData/Local/Programs/MiKTeX 2.9/fo
 nts/type1/public/amsfonts/cm/cmti12.pfb><C:/Users/warre/AppData/Local/Programs/
 MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmtt12.pfb>
-Output written on Motivation_and_Decisions.pdf (11 pages, 282497 bytes).
+Output written on Motivation_and_Decisions.pdf (10 pages, 300750 bytes).
 PDF statistics:
- 204 PDF objects out of 1000 (max. 8388607)
- 54 named destinations out of 1000 (max. 500000)
+ 200 PDF objects out of 1000 (max. 8388607)
+ 53 named destinations out of 1000 (max. 500000)
  80 words of extra memory for PDF output out of 10000 (max. 10000000)
 
