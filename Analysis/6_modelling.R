@@ -38,8 +38,18 @@ post_preds_beta <- function(m, x, m_matrix){
   
   p <- unlist(map2(A, B, dbeta, x = x_vals))
   
-  return(p)
+  hpdi_dist <- data.frame(lower = numeric(),
+                          upper = numeric())
+  for(ii in 1:3){
+    temp <- as.numeric(HDInterval::hdi(rbeta(1000, A[ii], B[ii])))
+    hpdi_dist <- rbind(hpdi_dist, data.frame(lower = temp[1],
+                                             upper = temp[2]))
+  }
+  
+  result <- list("p" = p, "hpdi_dist" = hpdi_dist)
+  return(result)
 }
+
 
 
 #### load in data ####
@@ -113,307 +123,6 @@ df_all%>%
   facet_wrap(~type) 
 
 
-#### ACCURACY ####
-#### brms models ####
-#### using all data: binomial ####
-# quick oneof dist_type * group for accuracy 
-# m_acc_group_dist <- brm(correct ~ (dist_type + group)^2,
-#                         data = df,
-#                         family = "bernoulli",
-#                         chains = 1,
-#                         cores = 1,
-#                         iter = 4000)
-
-# plot posterior 
-# too big... doesn't like this...
-# plt_brms_group_dist <- df %>%
-#   add_predicted_draws(m_acc_group_dist) %>%
-#   ggplot(aes(.prediction, colour = group, fill = group)) +
-#   geom_density(alpha = 0.3) +
-#   # geom_density(data = df,
-#   #              aes(Accuracy,
-#   #                  colour = group,
-#   #                  fill = NA),
-#   #              alpha = 0.0001) +
-#   theme_minimal() +
-#   ggthemes::scale_colour_ptol() +
-#   ggthemes::scale_fill_ptol() + 
-#   facet_wrap(~dist_type)
-
-#### Using averages: beta ####
-#### Beta: group*dist ####
-model_data <- df_all%>% 
-  group_by(participant, dist_type, group) %>%
-  summarise(Accuracy = mean(correct)) %>%
-  mutate(Accuracy = (Accuracy + 1e-5)*0.9999)
-
-m_acc_group_dist_beta <- brm(Accuracy ~ (dist_type + group)^2,
-                             data = model_data,
-                             family = "beta",
-                             chains = 1,
-                             cores = 1,
-                             iter = 4000)
-
-# plot posterior
-# try using the tidybayes idea?
-plt_group_dist <- model_data %>%
-  add_predicted_draws(m_acc_group_dist_beta) %>%
-  ggplot(aes(.prediction, colour = dist_type, fill = dist_type)) +
-  geom_density(alpha = 0.3) +
-  geom_density(data = model_data,
-               aes(Accuracy,
-                   colour = dist_type,
-                   fill = NA),
-               alpha = 0.0001) +
-  theme_minimal() +
-  ggthemes::scale_colour_ptol() +
-  ggthemes::scale_fill_ptol() +
-  facet_wrap(~group)
-plt_group_dist
-
-
-
-#### Beta: Group only ####
-model_data_2 <- df_all%>%
-  group_by(participant, group) %>%
-  summarise(Accuracy = mean(correct)) %>%
-  mutate(Accuracy = (Accuracy + 1e-5)*0.9999) 
-
-m_acc_group <- brm(Accuracy ~ group,
-                   data = model_data_2,
-                   family = "beta",
-                   chains = 1,
-                   cores = 1,
-                   iter = 2000,
-                   warmup = 1000)
-
-# plot
-plt_group <- model_data_2 %>%
-  add_predicted_draws(m_acc_group) %>%
-  ggplot(aes(.prediction, colour = group, fill = group)) +
-  geom_density(alpha = 0.3) +
-  theme_minimal() +
-  theme(legend.position = "bottom") + 
-  ggthemes::scale_colour_ptol() +
-  ggthemes::scale_fill_ptol()
-plt_group$labels$x <- "Success Rate"
-plt_group$labels$fill <- "Group"
-plt_group$labels$colour <- "Group"
-plt_group
-
-# check overlap?
-plt_diff <- plt_group[["data"]] %>%
-  ungroup() %>%
-  select(group, .prediction, .draw) %>%
-  group_by(group, .draw) %>%
-  summarise(.prediction = mean(.prediction)) %>%
-  spread(group, .prediction) %>%
-  mutate("Motivated vs Control" = motivated - control,
-         "Optimal vs Motivated" = optimal - motivated,
-         "Optimal vs Control" = optimal - control) %>%
-  select(-control, -motivated, -optimal) %>%
-  gather("Motivated vs Control":"Optimal vs Control",
-         key = "Comparison",
-         value = "Difference") %>%
-  ggplot(aes(Difference, colour = Comparison, fill = Comparison)) + 
-  geom_density(alpha = 0.3) + 
-  theme_minimal() +
-  theme(legend.position = "bottom") + 
-  ggthemes::scale_colour_ptol() +
-  ggthemes::scale_fill_ptol() + 
-  geom_vline(xintercept = 0,
-             linetype = "dashed")
-plt_diff
-
-# plot together
-plt_raw_acc <- gridExtra::grid.arrange(plt_group, plt_diff, ncol = 2)
-ggsave(plt_raw_acc, file = "../Figures/Model_output_raw_acc.png",
-       height = 5,
-       width = 13)
-
-# HPDI for estimates 
-HPDI_m_acc_group <- plt_group[["data"]] %>%
-  group_by(group) %>%
-  summarise(lower = HPDI(.prediction, 0.95)[1],
-            upper = HPDI(.prediction, 0.95)[2])
-
-
-#### BRMS on expected accuracy ####
-model_data_3 <- df_all%>%
-  group_by(participant, group) %>%
-  summarise(pred_accuracy = mean(accuracy))
-
-# model 
-m_pacc_group <- brm(pred_accuracy ~ group,
-                    data = model_data_3,
-                    family = "beta",
-                    chains = 1,
-                    cores = 1,
-                    iter = 2000,
-                    warmup = 1000)
-
-plt_group <- model_data_3 %>%
-  add_predicted_draws(m_pacc_group) %>%
-  ggplot(aes(.prediction, colour = group, fill = group)) +
-  geom_density(alpha = 0.3) +
-  theme_minimal() +
-  theme(legend.position = "bottom") + 
-  ggthemes::scale_colour_ptol() +
-  ggthemes::scale_fill_ptol()
-plt_group$labels$x <- "Accuracy"
-plt_group$labels$fill <- "Group"
-plt_group$labels$colour <- "Group"
-plt_group
-
-plt_diff <- plt_group[["data"]] %>%
-  ungroup() %>%
-  select(group, .prediction, .draw) %>%
-  group_by(group, .draw) %>%
-  summarise(.prediction = mean(.prediction)) %>%
-  spread(group, .prediction) %>%
-  mutate("Motivated vs Control" = motivated - control,
-         "Optimal vs Motivated" = optimal - motivated,
-         "Optimal vs Control" = optimal - control) %>%
-  select(-control, -motivated, -optimal) %>%
-  gather("Motivated vs Control":"Optimal vs Control",
-         key = "Comparison",
-         value = "Difference") %>%
-  ggplot(aes(Difference, colour = Comparison, fill = Comparison)) + 
-  geom_density(alpha = 0.3) + 
-  theme_minimal() + 
-  theme(legend.position = "bottom") + 
-  ggthemes::scale_colour_ptol() +
-  ggthemes::scale_fill_ptol() + 
-  geom_vline(xintercept = 0,
-             linetype = "dashed")
-plt_diff
-
-# save plot 
-plt_exp_acc <- gridExtra::grid.arrange(plt_group, plt_diff, ncol = 2)
-ggsave(plt_exp_acc, file = "../Figures/Model_output_exp_acc.png",
-       height = 5,
-       width = 13)
-
-
-
-
-#### STAN ####
-#### STAN: binomial ####
-# setup contrasts myself  
-df$motivated <- 0 
-df$motivated[df$group == "motivated"] <- 1
-df$optimal <- 0 
-df$optimal[df$group == "optimal"] <- 1
-df$dist_far <- 0 
-df$dist_far[df$dist_type == "far"] <- 1 
-
-stan_df <- list(
-  N = nrow(df), 
-  optimal = df$optimal,
-  motivated = df$motivated,
-  dist_far = df$dist_far, 
-  correct = df$correct
-)
-
-m_stan_group_dist_bin <- stan(
-  file = "modelling/models/binomial_model_2.stan",
-  data = stan_df,
-  chains = 1, 
-  warmup = 1000,
-  iter = 2000,
-  refresh = 100
-)
-
-# save this and work on  
-save(m_stan_group_dist_bin, file = "modelling/model_outputs/m_stan_group_dist_bin")
-
-# working on plotting this output
-post_samples <- as.tibble(rstan::extract(m_stan_group_dist_bin))
-
-# use this to set up esimates 
-get_preds <- function(dist_far, post){
-  # setting dist_type 
-  if(dist_far > 0){
-    dist_type = "far"
-  } else {
-    dist_type = "close"
-  }
-  preds <- data.frame(
-    group = rep(c(
-      "control",
-      "motivated",
-      "optimal"
-    ), each = length(post$c)),
-    dist_type = dist_type, 
-    samples = c(
-      plogis(post$c + post$b_f*dist_far),
-      plogis(post$c + post$b_f*dist_far + post$b_m + post$b_mf*dist_far),
-      plogis(post$c + post$b_f*dist_far + post$b_o + post$b_of*dist_far)))
-  return(preds)
-}
-
-samples_close <- get_preds(0, post_samples)
-samples_far <- get_preds(1, post_samples)
-
-samples <- rbind(samples_close, samples_far)
-
-# plot this
-samples %>% 
-  ggplot(aes(samples, colour = group, fill = group)) + 
-  geom_density(alpha = 0.3) + 
-  theme_minimal() + 
-  ggthemes::scale_colour_ptol() + 
-  ggthemes::scale_fill_ptol() + 
-  facet_wrap(~dist_type)
-
-
-# same as above but remove the dist_type interaction 
-stan_df <- list(
-  N = nrow(df), 
-  optimal = df$optimal,
-  motivated = df$motivated, 
-  correct = df$correct
-)
-
-m_stan_group_bin <- stan(
-  file = "modelling/models/binomial_model_main_group.stan",
-  data = stan_df,
-  chains = 1,
-  warmup = 1000,
-  iter = 2000,
-  refresh = 100
-)
-
-# get post 
-post_samples <- as.tibble(extract(m_stan_group_bin))
-
-# predictions 
-plt_stan_acc_group <- data.frame(
-  group = rep(c(
-    "control",
-    "motivated",
-    "optimal"), each = length(post_samples$c)),
-  samples = c(
-    plogis(post_samples$c),
-    plogis(post_samples$c + post_samples$b_m),
-    plogis(post_samples$c + post_samples$b_o))) %>% 
-  ggplot(aes(samples, colour = group, fill = group)) + 
-  geom_density(alpha = 0.3) + 
-  theme_minimal() + 
-  ggthemes::scale_colour_ptol() + 
-  ggthemes::scale_fill_ptol()
-
-
-
-# PROPORTION SIDE #
-# # make a side column 
-# df$side <- 1 - df$centre
-# 
-# # make norm delta 
-# df_all<- df_all%>% 
-#   group_by(participant) %>%
-#   mutate(norm_delta = separation/max(separation))
-# 
 
 #### STAN: Beta ####
 #### STAN: Accuracy ~ group ####
@@ -466,7 +175,7 @@ x_vals <- seq(0,1-0.001,0.001)
 plt_posterior <- tibble(
   group = rep(unique(model_data_2$group), each = length(x_vals)),
   x = rep(x_vals, 3),
-  p = post_preds_beta(m_stan_group, x_vals, X)) %>%
+  p = post_preds_beta(m_stan_group, x_vals, X)$p) %>%
   ggplot(aes(x, p, colour = group, fill = group)) + 
   #geom_line(aes(group = Group)) +
   geom_area(position = "dodge", alpha = 0.3) +
@@ -492,15 +201,22 @@ for (ii in 1:nrow(samples$beta)) {
   mu[ii, ] <- plogis(X %*% samples$beta[ii, ])
 }
 
-# version 2; doesn't need rethinking but gives the same answer
-hpdi_2 <- as.tibble(t(purrr::map_df(as.tibble(mu), hdi))) %>%
+# hdpi for mean
+hpdi_mu <- as.tibble(t(purrr::map_df(as.tibble(mu), hdi))) %>%
   cbind(tibble(group = c("control", "motivated", "optimal"))) %>%
   `colnames<-`(c("lower", "upper", "group")) %>%
   select(group, lower, upper)
-hpdi_2
+hpdi_mu
+
+
+hpdi_dist <- post_preds_beta(m_stan_group, x_vals, X)$hpdi_dist %>%
+  cbind(tibble(group = c("control", "motivated", "optimal"))) %>%
+  remove_rownames() %>%
+  select(group, lower, upper)
+hpdi_dist
 
 # new plot for shaded regions
-plt_shaded_regions <- merge(plt_posterior[["data"]], hpdi_2) %>%
+plt_shaded_regions <- merge(plt_posterior[["data"]], hpdi_dist) %>%
   mutate(variable = ifelse(x > lower & x < upper, 1, 0)) 
 plt_shaded_regions <- ggplot(plt_shaded_regions,
                              aes(x, p,
@@ -612,7 +328,7 @@ m_stan_group_exp <- stan(
 # extract samples
 samples <- rstan::extract(m_stan_group_exp)
 
-#### PLOT: Predicted Accuracy ####
+#### PLOTTING: Predicted Accuracy ####
 # setup effs
 X <- tibble(intercept = c(1,1,1),
             motivated = c(0,1,0),
@@ -626,7 +342,7 @@ x_vals <- seq(0,1-0.001,0.001)
 plt_posterior <- tibble(
   Group = rep(unique(model_data_3$group), each = length(x_vals)),
   x = rep(x_vals, 3),
-  p = post_preds_beta(m_stan_group_exp, x_vals, X)) %>%
+  p = post_preds_beta(m_stan_group_exp, x_vals, X)$p) %>%
   ggplot(aes(x, p, colour = Group, fill = Group)) + 
   #geom_line(aes(group = Group)) +
   geom_area(position = "dodge", alpha = 0.3) +
@@ -651,16 +367,35 @@ for (ii in 1:nrow(samples$beta)) {
   mu[ii, ] <- plogis(X %*% samples$beta[ii, ])
 }
 
-hpdi <- as.tibble(t(purrr::map_df(as.tibble(mu), hdi))) %>%
+hpdi_mu <- as.tibble(t(purrr::map_df(as.tibble(mu), hdi))) %>%
   cbind(tibble(group = c("control", "motivated", "optimal"))) %>%
   `colnames<-`(c("lower", "upper", "group")) %>%
   select(group, lower, upper)
-hpdi
+hpdi_mu
 
-# for posterior 
-# need to get A and B esimtates, then doing some number 
-# of sims to get some random values, then we can plot the 
-# HPDI for the posterior... I believe...
+hpdi_dist <- post_preds_beta(m_stan_group_exp, x_vals, X)$hpdi_dist %>%
+  cbind(tibble(Group = c("control", "motivated", "optimal"))) %>%
+  remove_rownames() %>%
+  select(Group, lower, upper)
+hpdi_dist
+
+# new plot for shaded regions
+plt_shaded_regions <- merge(plt_posterior[["data"]], hpdi_dist) %>%
+  mutate(variable = ifelse(x > lower & x < upper, 1, 0)) 
+plt_shaded_regions <- ggplot(plt_shaded_regions,
+                             aes(x, p,
+                                 colour = Group,
+                                 fill = Group)) + 
+  geom_line() + 
+  geom_area(data = filter(plt_shaded_regions, variable == 1),
+            position = "dodge",
+            alpha = 0.2) + 
+  scale_x_continuous(limits = c(0.5, 0.9)) + 
+  theme_minimal() + 
+  theme(legend.position = "bottom") + 
+  ggthemes::scale_colour_ptol() + 
+  ggthemes::scale_fill_ptol()
+plt_shaded_regions
 
 # looking at differences 
 plt_diff <- tibble(control = mu[,1],
@@ -799,6 +534,310 @@ HPDI_seg_d <- plt_mu_df_dist[["data"]] %>%
             lower = HPDI(pred_mu, 0.95)[1],
             upper = HPDI(pred_mu, 0.95)[2])
 HPDI_seg_d
+
+
+
+#### ACCURACY ####
+#### brms models ####
+#### using all data: binomial ####
+# quick oneof dist_type * group for accuracy 
+# m_acc_group_dist <- brm(correct ~ (dist_type + group)^2,
+#                         data = df,
+#                         family = "bernoulli",
+#                         chains = 1,
+#                         cores = 1,
+#                         iter = 4000)
+
+# plot posterior 
+# too big... doesn't like this...
+# plt_brms_group_dist <- df %>%
+#   add_predicted_draws(m_acc_group_dist) %>%
+#   ggplot(aes(.prediction, colour = group, fill = group)) +
+#   geom_density(alpha = 0.3) +
+#   # geom_density(data = df,
+#   #              aes(Accuracy,
+#   #                  colour = group,
+#   #                  fill = NA),
+#   #              alpha = 0.0001) +
+#   theme_minimal() +
+#   ggthemes::scale_colour_ptol() +
+#   ggthemes::scale_fill_ptol() + 
+#   facet_wrap(~dist_type)
+
+#### Using averages: beta ####
+#### Beta: group*dist ####
+# model_data <- df_all%>% 
+#   group_by(participant, dist_type, group) %>%
+#   summarise(Accuracy = mean(correct)) %>%
+#   mutate(Accuracy = (Accuracy + 1e-5)*0.9999)
+# 
+# m_acc_group_dist_beta <- brm(Accuracy ~ (dist_type + group)^2,
+#                              data = model_data,
+#                              family = "beta",
+#                              chains = 1,
+#                              cores = 1,
+#                              iter = 4000)
+# 
+# # plot posterior
+# # try using the tidybayes idea?
+# plt_group_dist <- model_data %>%
+#   add_predicted_draws(m_acc_group_dist_beta) %>%
+#   ggplot(aes(.prediction, colour = dist_type, fill = dist_type)) +
+#   geom_density(alpha = 0.3) +
+#   geom_density(data = model_data,
+#                aes(Accuracy,
+#                    colour = dist_type,
+#                    fill = NA),
+#                alpha = 0.0001) +
+#   theme_minimal() +
+#   ggthemes::scale_colour_ptol() +
+#   ggthemes::scale_fill_ptol() +
+#   facet_wrap(~group)
+# plt_group_dist
+# 
+# 
+# 
+# #### Beta: Group only ####
+# model_data_2 <- df_all%>%
+#   group_by(participant, group) %>%
+#   summarise(Accuracy = mean(correct)) %>%
+#   mutate(Accuracy = (Accuracy + 1e-5)*0.9999) 
+# 
+# m_acc_group <- brm(Accuracy ~ group,
+#                    data = model_data_2,
+#                    family = "beta",
+#                    chains = 1,
+#                    cores = 1,
+#                    iter = 2000,
+#                    warmup = 1000)
+# 
+# # plot
+# plt_group <- model_data_2 %>%
+#   add_predicted_draws(m_acc_group) %>%
+#   ggplot(aes(.prediction, colour = group, fill = group)) +
+#   geom_density(alpha = 0.3) +
+#   theme_minimal() +
+#   theme(legend.position = "bottom") + 
+#   ggthemes::scale_colour_ptol() +
+#   ggthemes::scale_fill_ptol()
+# plt_group$labels$x <- "Success Rate"
+# plt_group$labels$fill <- "Group"
+# plt_group$labels$colour <- "Group"
+# plt_group
+# 
+# # check overlap?
+# plt_diff <- plt_group[["data"]] %>%
+#   ungroup() %>%
+#   select(group, .prediction, .draw) %>%
+#   group_by(group, .draw) %>%
+#   summarise(.prediction = mean(.prediction)) %>%
+#   spread(group, .prediction) %>%
+#   mutate("Motivated vs Control" = motivated - control,
+#          "Optimal vs Motivated" = optimal - motivated,
+#          "Optimal vs Control" = optimal - control) %>%
+#   select(-control, -motivated, -optimal) %>%
+#   gather("Motivated vs Control":"Optimal vs Control",
+#          key = "Comparison",
+#          value = "Difference") %>%
+#   ggplot(aes(Difference, colour = Comparison, fill = Comparison)) + 
+#   geom_density(alpha = 0.3) + 
+#   theme_minimal() +
+#   theme(legend.position = "bottom") + 
+#   ggthemes::scale_colour_ptol() +
+#   ggthemes::scale_fill_ptol() + 
+#   geom_vline(xintercept = 0,
+#              linetype = "dashed")
+# plt_diff
+# 
+# # plot together
+# plt_raw_acc <- gridExtra::grid.arrange(plt_group, plt_diff, ncol = 2)
+# ggsave(plt_raw_acc, file = "../Figures/Model_output_raw_acc.png",
+#        height = 5,
+#        width = 13)
+# 
+# # HPDI for estimates 
+# HPDI_m_acc_group <- plt_group[["data"]] %>%
+#   group_by(group) %>%
+#   summarise(lower = HPDI(.prediction, 0.95)[1],
+#             upper = HPDI(.prediction, 0.95)[2])
+# 
+# 
+# #### BRMS on expected accuracy ####
+# model_data_3 <- df_all%>%
+#   group_by(participant, group) %>%
+#   summarise(pred_accuracy = mean(accuracy))
+# 
+# # model 
+# m_pacc_group <- brm(pred_accuracy ~ group,
+#                     data = model_data_3,
+#                     family = "beta",
+#                     chains = 1,
+#                     cores = 1,
+#                     iter = 2000,
+#                     warmup = 1000)
+# 
+# plt_group <- model_data_3 %>%
+#   add_predicted_draws(m_pacc_group) %>%
+#   ggplot(aes(.prediction, colour = group, fill = group)) +
+#   geom_density(alpha = 0.3) +
+#   theme_minimal() +
+#   theme(legend.position = "bottom") + 
+#   ggthemes::scale_colour_ptol() +
+#   ggthemes::scale_fill_ptol()
+# plt_group$labels$x <- "Accuracy"
+# plt_group$labels$fill <- "Group"
+# plt_group$labels$colour <- "Group"
+# plt_group
+# 
+# plt_diff <- plt_group[["data"]] %>%
+#   ungroup() %>%
+#   select(group, .prediction, .draw) %>%
+#   group_by(group, .draw) %>%
+#   summarise(.prediction = mean(.prediction)) %>%
+#   spread(group, .prediction) %>%
+#   mutate("Motivated vs Control" = motivated - control,
+#          "Optimal vs Motivated" = optimal - motivated,
+#          "Optimal vs Control" = optimal - control) %>%
+#   select(-control, -motivated, -optimal) %>%
+#   gather("Motivated vs Control":"Optimal vs Control",
+#          key = "Comparison",
+#          value = "Difference") %>%
+#   ggplot(aes(Difference, colour = Comparison, fill = Comparison)) + 
+#   geom_density(alpha = 0.3) + 
+#   theme_minimal() + 
+#   theme(legend.position = "bottom") + 
+#   ggthemes::scale_colour_ptol() +
+#   ggthemes::scale_fill_ptol() + 
+#   geom_vline(xintercept = 0,
+#              linetype = "dashed")
+# plt_diff
+# 
+# # save plot 
+# plt_exp_acc <- gridExtra::grid.arrange(plt_group, plt_diff, ncol = 2)
+# ggsave(plt_exp_acc, file = "../Figures/Model_output_exp_acc.png",
+#        height = 5,
+#        width = 13)
+# 
+# 
+# 
+# 
+# #### STAN ####
+# #### STAN: binomial ####
+# # setup contrasts myself  
+# df$motivated <- 0 
+# df$motivated[df$group == "motivated"] <- 1
+# df$optimal <- 0 
+# df$optimal[df$group == "optimal"] <- 1
+# df$dist_far <- 0 
+# df$dist_far[df$dist_type == "far"] <- 1 
+# 
+# stan_df <- list(
+#   N = nrow(df), 
+#   optimal = df$optimal,
+#   motivated = df$motivated,
+#   dist_far = df$dist_far, 
+#   correct = df$correct
+# )
+# 
+# m_stan_group_dist_bin <- stan(
+#   file = "modelling/models/binomial_model_2.stan",
+#   data = stan_df,
+#   chains = 1, 
+#   warmup = 1000,
+#   iter = 2000,
+#   refresh = 100
+# )
+# 
+# # save this and work on  
+# save(m_stan_group_dist_bin, file = "modelling/model_outputs/m_stan_group_dist_bin")
+# 
+# # working on plotting this output
+# post_samples <- as.tibble(rstan::extract(m_stan_group_dist_bin))
+# 
+# # use this to set up esimates 
+# get_preds <- function(dist_far, post){
+#   # setting dist_type 
+#   if(dist_far > 0){
+#     dist_type = "far"
+#   } else {
+#     dist_type = "close"
+#   }
+#   preds <- data.frame(
+#     group = rep(c(
+#       "control",
+#       "motivated",
+#       "optimal"
+#     ), each = length(post$c)),
+#     dist_type = dist_type, 
+#     samples = c(
+#       plogis(post$c + post$b_f*dist_far),
+#       plogis(post$c + post$b_f*dist_far + post$b_m + post$b_mf*dist_far),
+#       plogis(post$c + post$b_f*dist_far + post$b_o + post$b_of*dist_far)))
+#   return(preds)
+# }
+# 
+# samples_close <- get_preds(0, post_samples)
+# samples_far <- get_preds(1, post_samples)
+# 
+# samples <- rbind(samples_close, samples_far)
+# 
+# # plot this
+# samples %>% 
+#   ggplot(aes(samples, colour = group, fill = group)) + 
+#   geom_density(alpha = 0.3) + 
+#   theme_minimal() + 
+#   ggthemes::scale_colour_ptol() + 
+#   ggthemes::scale_fill_ptol() + 
+#   facet_wrap(~dist_type)
+# 
+# 
+# # same as above but remove the dist_type interaction 
+# stan_df <- list(
+#   N = nrow(df), 
+#   optimal = df$optimal,
+#   motivated = df$motivated, 
+#   correct = df$correct
+# )
+# 
+# m_stan_group_bin <- stan(
+#   file = "modelling/models/binomial_model_main_group.stan",
+#   data = stan_df,
+#   chains = 1,
+#   warmup = 1000,
+#   iter = 2000,
+#   refresh = 100
+# )
+# 
+# # get post 
+# post_samples <- as.tibble(extract(m_stan_group_bin))
+# 
+# # predictions 
+# plt_stan_acc_group <- data.frame(
+#   group = rep(c(
+#     "control",
+#     "motivated",
+#     "optimal"), each = length(post_samples$c)),
+#   samples = c(
+#     plogis(post_samples$c),
+#     plogis(post_samples$c + post_samples$b_m),
+#     plogis(post_samples$c + post_samples$b_o))) %>% 
+#   ggplot(aes(samples, colour = group, fill = group)) + 
+#   geom_density(alpha = 0.3) + 
+#   theme_minimal() + 
+#   ggthemes::scale_colour_ptol() + 
+#   ggthemes::scale_fill_ptol()
+# 
+
+
+# PROPORTION SIDE #
+# # make a side column 
+# df$side <- 1 - df$centre
+# 
+# # make norm delta 
+# df_all<- df_all%>% 
+#   group_by(participant) %>%
+#   mutate(norm_delta = separation/max(separation))
+# 
 
 
 
