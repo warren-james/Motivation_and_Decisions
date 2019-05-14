@@ -393,15 +393,6 @@ samples <- rstan::extract(m_stan_group_exp)
 
 
 #### PLOTTING: Predicted Accuracy ####
-# setup effs
-X <- tibble(intercept = c(1,1,1),
-            motivated = c(0,1,0),
-            optimal = c(0,0,1))
-X <- as.matrix(X)
-
-# sequence to estimate likelihood 
-x_vals <- seq(0,1-0.001,0.001)
-
 # plt posterior
 plt_posterior <- plt_post_beta(model_data_3, x_vals, m_stan_group_exp, X)
 plt_posterior <- plt_posterior + 
@@ -444,7 +435,7 @@ plt_real <- model_data_3 %>%
                  alpha = 0.4) + 
   theme_minimal() + 
   theme(legend.position = "bottom") + 
-  scale_x_continuous(limits = c(0.6,0.9)) +
+  scale_x_continuous(limits = c(0.5,0.9)) +
   ggthemes::scale_color_ptol() + 
   ggthemes::scale_fill_ptol() 
 plt_real$labels$x <- "Expected Accuracy"
