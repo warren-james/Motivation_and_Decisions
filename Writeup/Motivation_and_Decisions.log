@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (MiKTeX 2.9.7000 64-bit) (preloaded format=pdflatex 2019.4.29)  13 MAY 2019 15:23
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (MiKTeX 2.9.7000 64-bit) (preloaded format=pdflatex 2019.4.29)  14 MAY 2019 11:54
 entering extended mode
 **./Motivation_and_Decisions.tex
 (Motivation_and_Decisions.tex
@@ -538,7 +538,7 @@ LaTeX Font Info:    External font `cmex10' loaded for size
 \openout5 = `Motivation_and_Decisions.toc'.
 
  [2] [3] [4] [5] [6]
-<../Figures/Part_2_all_groups.png, id=138, 722.7pt x 722.7pt>
+<../Figures/Part_2_all_groups.png, id=140, 722.7pt x 722.7pt>
 File: ../Figures/Part_2_all_groups.png Graphic file (type png)
 <use ../Figures/Part_2_all_groups.png>
 Package pdftex.def Info: ../Figures/Part_2_all_groups.png  used on input line 1
@@ -549,14 +549,14 @@ Overfull \hbox (22.18971pt too wide) in paragraph at lines 135--138
  [][] 
  []
 
-<../Figures/Model_stan_rawacc.png, id=139, 578.16pt x 361.35pt>
+<../Figures/Model_stan_rawacc.png, id=141, 578.16pt x 361.35pt>
 File: ../Figures/Model_stan_rawacc.png Graphic file (type png)
 <use ../Figures/Model_stan_rawacc.png>
 Package pdftex.def Info: ../Figures/Model_stan_rawacc.png  used on input line 1
 48.
 (pdftex.def)             Requested size: 462.52863pt x 289.0804pt.
 [7] [8 <../Figures/Part_2_all_groups.png>]
-<../Figures/Model_stan_expacc.png, id=165, 578.16pt x 361.35pt>
+<../Figures/Model_stan_expacc.png, id=167, 578.16pt x 361.35pt>
 File: ../Figures/Model_stan_expacc.png Graphic file (type png)
 <use ../Figures/Model_stan_expacc.png>
 Package pdftex.def Info: ../Figures/Model_stan_expacc.png  used on input line 1
@@ -597,9 +597,9 @@ b><C:/Users/warre/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/public/amsfonts
 blic/amsfonts/cm/cmsy8.pfb><C:/Users/warre/AppData/Local/Programs/MiKTeX 2.9/fo
 nts/type1/public/amsfonts/cm/cmti12.pfb><C:/Users/warre/AppData/Local/Programs/
 MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmtt12.pfb>
-Output written on Motivation_and_Decisions.pdf (12 pages, 314756 bytes).
+Output written on Motivation_and_Decisions.pdf (12 pages, 314008 bytes).
 PDF statistics:
- 236 PDF objects out of 1000 (max. 8388607)
+ 238 PDF objects out of 1000 (max. 8388607)
  64 named destinations out of 1000 (max. 500000)
  80 words of extra memory for PDF output out of 10000 (max. 10000000)
 

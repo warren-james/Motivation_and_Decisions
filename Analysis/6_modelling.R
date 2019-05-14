@@ -54,6 +54,132 @@ post_preds_beta <- function(m, x, m_matrix){
 }
 
 
+# plt posterior_beta
+plt_post_beta <- function(model_df, values, model, m_matrix, lower){
+  plt_posterior <- tibble(
+    group = rep(unique(model_df$group), each = length(values)),
+    x = rep(values, 3),
+    p = post_preds_beta(model, values, m_matrix)$p) %>%
+    ggplot(aes(x, p, colour = group, fill = group)) + 
+    geom_area(position = "dodge", alpha = 0.3) +
+    theme_minimal() +  
+    ggthemes::scale_color_ptol() + 
+    ggthemes::scale_fill_ptol() + 
+    theme(legend.position = "bottom")
+  plt_posterior$labels$x <- "Posterior Distribution"
+  plt_posterior$labels$y <- "density"
+  return(plt_posterior)
+}
+
+# plotting mean effect 
+plt_mu_beta <- function(samples, m_matrix){
+  # get mu estimates
+  mu <- array(0, dim = c(nrow(samples$beta), nrow(X)))
+  for (ii in 1:nrow(samples$beta)) {
+    mu[ii, ] <- plogis(X %*% samples$beta[ii, ])
+  }
+  
+  # make data frame of this 
+  mu_df <- as.tibble(mu) %>%
+    `colnames<-`(c("control", "motivated", "optimal")) %>%
+    gather(key = "group",
+           value = "p_mu")
+  
+  # get hdpi
+  hpdi_mu <- as.tibble(t(purrr::map_df(as.tibble(mu), hdi))) %>%
+    cbind(tibble(group = c("control", "motivated", "optimal"))) %>%
+    `colnames<-`(c("lower", "upper", "group")) %>%
+    select(group, lower, upper)
+  hpdi_mu
+  
+  # make plt
+  plt_mu <- mu_df %>%
+    ggplot(aes(p_mu, colour = group, fill = group)) +
+    geom_density(alpha= 0.3) + 
+    theme_minimal() + 
+    theme(legend.position = "bottom") + 
+    ggthemes::scale_color_ptol() +
+    ggthemes::scale_fill_ptol()
+  plt_mu$labels$colour <- "Group"
+  plt_mu$labels$fill <- "Group"
+  plt_mu$labels$x <- "Predicted Mean Accuracy"
+  plt_mu
+  
+  my_list <- list(mu, mu_df, hpdi_mu, plt_mu)
+  return(my_list)
+}
+
+# plt shaded_mu 
+plt_shaded_mu_beta <- function(data_mu, data_hpdi, data_posterior){
+  # get mu line
+  mu_line <- data.frame(group = character(),
+                        x = numeric(),
+                        y = numeric())
+  
+  for(ii in unique(data_mu$group)){
+    temp <- filter(data_mu[data_mu$group == ii,])
+    
+    x <- density(temp$p_mu)$x
+    y <- density(temp$p_mu)$y
+    
+    mu_line <- rbind(mu_line, data.frame(group = ii,
+                                         x = x,
+                                         y = y))
+  }
+  
+  # now make plot
+  plt_shaded_mu <- merge(mu_line, data_hpdi) %>%
+    mutate(variable = ifelse(x > lower & x < upper, 1, 0))
+  plt_shaded_mu <- ggplot(data_posterior,
+                          aes(colour = group,
+                              fill = group)) +
+    geom_line(aes(x, p)) + 
+    geom_area(data = filter(plt_shaded_mu, variable == 1), 
+              position = "dodge",
+              aes(x = x,
+                  y = y),
+              alpha = 0.3) + 
+    theme_minimal() + 
+    theme(legend.position = "bottom") + 
+    ggthemes::scale_color_ptol() +
+    ggthemes::scale_fill_ptol() + 
+    scale_x_continuous(limits = c(0.5, 0.9))
+  plt_shaded_mu$labels$colour <- "Group"
+  plt_shaded_mu$labels$fill <- "Group"  
+  plt_shaded_mu$labels$x <- "Predicted Accuracy"
+  plt_shaded_mu$labels$y <- "Density"
+  plt_shaded_mu
+  
+  return(plt_shaded_mu)
+}
+
+# plt differencefor means
+plt_diff_beta <- function(mu) {
+  plt_diff <- tibble(control = mu[,1],
+                     motivated = mu[,2],
+                     optimal = mu[,3]) %>%
+    mutate("Motivated - Control" = motivated - control,
+           "Optimal - Control" = optimal - control,
+           "Optimal - Motivated" = optimal - motivated) %>%
+    select(-control,
+           -motivated,
+           -optimal) %>%
+    gather(key = "Comparison",
+           value = "Difference") %>%
+    ggplot(aes(Difference,
+               colour = Comparison,
+               fill = Comparison)) +
+    geom_density(alpha = 0.3) +
+    geom_vline(xintercept = 0,
+               linetype = "dashed") +
+    ggthemes::scale_color_ptol() +
+    ggthemes::scale_fill_ptol() +
+    theme_minimal() +
+    theme(legend.position = "bottom")
+  
+  # return plt
+  return(plt_diff)
+}
 
 #### load in data ####
 load("scratch/all_data")
@@ -82,7 +208,6 @@ acc_sep <- merge(acc_sep, df_groupID) %>%
 rm(acc_sep_peng)
 
 # bind this to df 
-# need to figure out distances... before binding...
 acc_sep_1 <- acc_sep %>%
   mutate(separation_1 = separation,
          accuracy_1 = accuracy) %>%
@@ -175,23 +300,11 @@ X <- as.matrix(X)
 x_vals <- seq(0,1-0.001,0.001)
 
 # plt posterior
-plt_posterior <- tibble(
-  group = rep(unique(model_data_2$group), each = length(x_vals)),
-  x = rep(x_vals, 3),
-  p = post_preds_beta(m_stan_group, x_vals, X)$p) %>%
-  ggplot(aes(x, p, colour = group, fill = group)) + 
-  #geom_line(aes(group = Group)) +
-  geom_area(position = "dodge", alpha = 0.3) +
-  theme_minimal() + 
+plt_posterior <- plt_post_beta(model_data_2, x_vals, m_stan_group, X)
+plt_posterior <- plt_posterior + 
   scale_x_continuous(limits = c(0.5, 0.9)) + 
-  scale_y_continuous(breaks = c(seq(0,15,5))) +
-  ggthemes::scale_color_ptol() + 
-  ggthemes::scale_fill_ptol() + 
-  theme(legend.position = "bottom")
-plt_posterior$labels$x <- "Posterior Distribution"
-plt_posterior$labels$y <- "density"
+  scale_y_continuous(breaks = seq(0,15,5))
 plt_posterior
-
 # save 
 ggsave("../Figures/Model_stan_rawacc.png",
        height = 5,
@@ -200,135 +313,21 @@ ggsave("../Figures/Model_stan_rawacc.png",
 
 
 
-
-
-
-
-
-
 # get predictions for mu
-mu <- array(0, dim = c(nrow(samples$beta), nrow(X)))
-for (ii in 1:nrow(samples$beta)) {
-  mu[ii, ] <- plogis(X %*% samples$beta[ii, ])
-}
-
-mu_df <- as.tibble(mu) %>%
-  `colnames<-`(c("control", "motivated", "optimal")) %>%
-  gather(key = "group",
-         value = "p_mu")
-
-# hdpi for mean
-hpdi_mu <- as.tibble(t(purrr::map_df(as.tibble(mu), hdi))) %>%
-  cbind(tibble(group = c("control", "motivated", "optimal"))) %>%
-  `colnames<-`(c("lower", "upper", "group")) %>%
-  select(group, lower, upper)
-hpdi_mu
-
-# make mu plot 
-plt_mu <- mu_df %>%
-  ggplot(aes(p_mu, colour = group, fill = group)) +
-  geom_density(alpha= 0.3) + 
-  theme_minimal() + 
-  theme(legend.position = "bottom") + 
-  ggthemes::scale_color_ptol() +
-  ggthemes::scale_fill_ptol()
-plt_mu$labels$colour <- "Group"
-plt_mu$labels$fill <- "Group"
-plt_mu$labels$x <- "Predicted Mean Accuracy"
+mu_list <- plt_mu_beta(samples, X)
+mu <- mu_list[[1]]
+mu_df <- mu_list[[2]]
+hpdi_mu <- mu_list[[3]]
+plt_mu <- mu_list[[4]]
 plt_mu
 
 # extract density information for this? 
-mu_line <- data.frame(group = character(),
-                      x = numeric(),
-                      y = numeric())
-
-for(ii in unique(plt_mu[["data"]]$group)){
-  temp2 <- filter(plt_mu[["data"]][plt_mu[["data"]]$group == ii,])
-  
-  x <- density(temp2$p_mu)$x
-  y <- density(temp2$p_mu)$y
-  
-  mu_line <- rbind(mu_line, data.frame(group = ii,
-                                       x = x,
-                                       y = y))
-}
-# tidy 
-rm(ii, temp2, x, y)
-
-
-# Alasdair plot 
-plt_shaded_mu <- merge(mu_line, hpdi_mu) %>%
-  mutate(variable = ifelse(x > lower & x < upper, 1, 0))
-plt_shaded_mu <- ggplot(plt_posterior[["data"]],
-                        aes(colour = group,
-                            fill = group)) +
-  geom_line(aes(x, p)) + 
-  geom_area(data = filter(plt_shaded_mu, variable == 1), 
-            position = "dodge",
-            aes(x = x,
-                y = y),
-            alpha = 0.3) + 
-  theme_minimal() + 
-  theme(legend.position = "bottom") + 
-  ggthemes::scale_color_ptol() +
-  ggthemes::scale_fill_ptol() + 
-  scale_x_continuous(limits = c(0.5, 0.9))
-plt_shaded_mu$labels$colour <- "Group"
-plt_shaded_mu$labels$fill <- "Group"  
-plt_shaded_mu$labels$x <- "Predicted Accuracy"
-plt_shaded_mu$labels$y <- "Density"
+plt_shaded_mu <- plt_shaded_mu_beta(plt_mu[["data"]], hpdi_mu, plt_posterior[["data"]])
 plt_shaded_mu
 
-  
-  
-
-# hpdi for posterior
-hpdi_dist <- post_preds_beta(m_stan_group, x_vals, X)$hpdi_dist %>%
-  cbind(tibble(group = c("control", "motivated", "optimal"))) %>%
-  remove_rownames() %>%
-  select(group, lower, upper)
-hpdi_dist
-
-# new plot for shaded regions
-plt_shaded_regions <- merge(plt_posterior[["data"]], hpdi_dist) %>%
-  mutate(variable = ifelse(x > lower & x < upper, 1, 0)) 
-plt_shaded_regions <- ggplot(plt_shaded_regions,
-                             aes(x, p,
-                                 colour = group,
-                                 fill = group)) + 
-  geom_line() + 
-  geom_area(data = filter(plt_shaded_regions, variable == 1),
-            position = "dodge",
-            alpha = 0.3) + 
-  scale_x_continuous(limits = c(0.5, 0.9)) + 
-  theme_minimal() + 
-  theme(legend.position = "bottom") + 
-  ggthemes::scale_colour_ptol() + 
-  ggthemes::scale_fill_ptol()
-plt_shaded_regions
 
 # looking at differences 
-plt_diff <- tibble(control = mu[,1],
-                   motivated = mu[,2],
-                   optimal = mu[,3]) %>%
-  mutate("Motivated - Control" = motivated - control,
-         "Optimal - Control" = optimal - control,
-         "Optimal - Motivated" = optimal - motivated) %>%
-  select(-control, 
-         -motivated,
-         -optimal) %>%
-  gather(key = "Comparison",
-         value = "Difference") %>%
-  ggplot(aes(Difference,
-             colour = Comparison,
-             fill = Comparison)) +
-  geom_density(alpha = 0.3) +
-  geom_vline(xintercept = 0,
-             linetype = "dashed") +
-  ggthemes::scale_color_ptol() + 
-  ggthemes::scale_fill_ptol() + 
-  theme_minimal() + 
-  theme(legend.position = "bottom")
+plt_diff <- plt_diff_beta(mu)
 plt_diff
 
 # side by side for paper 
@@ -351,20 +350,6 @@ plt_real
 
 plt_both <- gridExtra::grid.arrange(plt_real, plt_posterior, nrow = 2)
 
-# means and posterior 
-plt_mu <- tibble(control = mu[,1],
-                 motivated = mu[,2],
-                 optimal = mu[,3]) %>%
-  gather(key = "group",
-         value = "mu") %>%
-  ggplot(aes(mu, colour = group, fill = group)) + 
-  geom_density(alpha = 0.3) + 
-  theme_minimal() + 
-  theme(legend.position = "bottom") + 
-  scale_x_continuous(limits = c(0.5,0.9)) +
-  ggthemes::scale_colour_ptol() + 
-  ggthemes::scale_fill_ptol()
-plt_mu
 
 
 
@@ -418,159 +403,36 @@ X <- as.matrix(X)
 x_vals <- seq(0,1-0.001,0.001)
 
 # plt posterior
-plt_posterior <- tibble(
-  group = rep(unique(model_data_3$group), each = length(x_vals)),
-  x = rep(x_vals, 3),
-  p = post_preds_beta(m_stan_group_exp, x_vals, X)$p) %>%
-  ggplot(aes(x, p, colour = group, fill = group)) + 
-  #geom_line(aes(group = Group)) +
-  geom_area(position = "dodge", alpha = 0.3) +
-  theme_minimal() + 
-  scale_x_continuous(limits = c(0.6, 0.9)) + 
-  ggthemes::scale_color_ptol() + 
-  ggthemes::scale_fill_ptol() + 
-  theme(legend.position = "bottom")
-plt_posterior$labels$x <- "Predicted Mean Expected Accuracy"
-plt_posterior$labels$y <- "density"
-plt_posterior$labels$colour <- "Group"
-plt_posterior$labels$fill <- "Group"
-plt_posterior 
+plt_posterior <- plt_post_beta(model_data_3, x_vals, m_stan_group_exp, X)
+plt_posterior <- plt_posterior + 
+  scale_x_continuous(limits = c(0.5, 0.9))
+plt_posterior
 
 # save 
 ggsave("../Figures/Model_stan_expacc.png",
        height = 5,
        width = 8)
 
-
-
-
-
 # work on HPDI stuff again 
 # for means
-mu <- array(0, dim = c(nrow(samples$beta), nrow(X)))
-for (ii in 1:nrow(samples$beta)) {
-  mu[ii, ] <- plogis(X %*% samples$beta[ii, ])
-}
-
-mu_df <- as.tibble(mu) %>%
-  `colnames<-`(c("control", "motivated", "optimal")) %>%
-  gather(key = "group",
-         value = "p_mu")
-
-hpdi_mu <- as.tibble(t(purrr::map_df(as.tibble(mu), hdi))) %>%
-  cbind(tibble(group = c("control", "motivated", "optimal"))) %>%
-  `colnames<-`(c("lower", "upper", "group")) %>%
-  select(group, lower, upper)
-hpdi_mu
-
-plt_mu <- mu_df %>%
-  ggplot(aes(p_mu, colour = group, fill = group)) +
-  geom_density(alpha= 0.3) + 
-  theme_minimal() + 
-  theme(legend.position = "bottom") + 
-  ggthemes::scale_color_ptol() +
-  ggthemes::scale_fill_ptol()
-plt_mu$labels$colour <- "Group"
-plt_mu$labels$fill <- "Group"
-plt_mu$labels$x <- "Predicted Mean Accuracy"
+mu_list <- plt_mu_beta(samples, X)
+mu_df <- mu_list[[2]]
+hpdi_mu <- mu_list[[3]]
+plt_mu <- mu_list[[4]]
 plt_mu
 
+
 # extract density information for this? 
-mu_line <- data.frame(group = character(),
-                      x = numeric(),
-                      y = numeric())
-
-for(ii in unique(plt_mu[["data"]]$group)){
-  temp2 <- filter(plt_mu[["data"]][plt_mu[["data"]]$group == ii,])
-  
-  x <- density(temp2$p_mu)$x
-  y <- density(temp2$p_mu)$y
-  
-  mu_line <- rbind(mu_line, data.frame(group = ii,
-                                       x = x,
-                                       y = y))
-}
-# tidy 
-rm(ii, temp2, x, y)
-
-
-# Alasdair plot 
-plt_shaded_mu <- merge(mu_line, hpdi_mu) %>%
-  mutate(variable = ifelse(x > lower & x < upper, 1, 0))
-plt_shaded_mu <- ggplot(plt_posterior[["data"]],
-                        aes(colour = group,
-                            fill = group)) +
-  geom_line(aes(x, p)) + 
-  geom_area(data = filter(plt_shaded_mu, variable == 1), 
-            position = "dodge",
-            aes(x = x,
-                y = y),
-            alpha = 0.3) + 
-  theme_minimal() + 
-  theme(legend.position = "bottom") + 
-  ggthemes::scale_color_ptol() +
-  ggthemes::scale_fill_ptol() + 
-  scale_x_continuous(limits = c(0.5, 0.9))
-plt_shaded_mu$labels$colour <- "Group"
-plt_shaded_mu$labels$fill <- "Group"  
-plt_shaded_mu$labels$x <- "Predicted Accuracy"
-plt_shaded_mu$labels$y <- "Density"
+plt_shaded_mu <- plt_shaded_mu_beta(plt_mu[["data"]], hpdi_mu, plt_posterior[["data"]])
 plt_shaded_mu
 
-
-
-
-hpdi_dist <- post_preds_beta(m_stan_group_exp, x_vals, X)$hpdi_dist %>%
-  cbind(tibble(Group = c("control", "motivated", "optimal"))) %>%
-  remove_rownames() %>%
-  select(Group, lower, upper)
-hpdi_dist
-
-# new plot for shaded regions
-plt_shaded_regions <- merge(plt_posterior[["data"]], hpdi_dist) %>%
-  mutate(variable = ifelse(x > lower & x < upper, 1, 0)) 
-plt_shaded_regions <- ggplot(plt_shaded_regions,
-                             aes(x, p,
-                                 colour = Group,
-                                 fill = Group)) + 
-  geom_line() + 
-  geom_area(data = filter(plt_shaded_regions, variable == 1),
-            position = "dodge",
-            alpha = 0.2) + 
-  scale_x_continuous(limits = c(0.5, 0.9)) + 
-  theme_minimal() + 
-  theme(legend.position = "bottom") + 
-  ggthemes::scale_colour_ptol() + 
-  ggthemes::scale_fill_ptol()
-plt_shaded_regions
-
 # looking at differences 
-plt_diff <- tibble(control = mu[,1],
-                   motivated = mu[,2],
-                   optimal = mu[,3]) %>%
-  mutate("Motivated - Control" = motivated - control,
-         "Optimal - Control" = optimal - control,
-         "Optimal - Motive" = optimal - motivated) %>%
-  select(-control, 
-         -motivated,
-         -optimal) %>%
-  gather(key = "Comparison",
-         value = "Difference") %>%
-  ggplot(aes(Difference,
-             colour = Comparison,
-             fill = Comparison)) +
-  geom_density(alpha = 0.3) +
-  geom_vline(xintercept = 0,
-             linetype = "dashed") +
-  ggthemes::scale_color_ptol() + 
-  ggthemes::scale_fill_ptol() + 
-  theme_minimal() + 
-  theme(legend.position = "bottom")
+plt_diff <- plt_diff_beta(mu)
 plt_diff
 
 # side by side for paper 
 plt_save <- gridExtra::grid.arrange(plt_posterior, plt_diff, ncol = 2)
-ggsave(plt_save, file = "../Figures/Model_stan_expacc_compare.png",
+ggsave(plt_save, file = "../Figures/Model_stan_expacc_diff.png",
        height = 5,
        width = 13)
 
@@ -594,6 +456,10 @@ plt_both <- gridExtra::grid.arrange(plt_real, plt_posterior, nrow = 2)
 ggsave(plt_both, file = "../Figures/Model_stan_expacc_compare.png",
        height = 7,
        width = 10)
+
+
+
+
 
 #### STAN: add in dist_type ####
 #### STAN: Actual Accuracy ####
