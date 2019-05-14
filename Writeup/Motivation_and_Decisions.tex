@@ -57,7 +57,7 @@
 	\vspace{1cm}
 	Warren \textsc{James}, \par
 	Dr.~Josephine \textsc{Reuther}, \par
-	%Ellen \textsc{Angus}, \par
+	Ellen \textsc{Angus}, \par
 	Dr.~Amelia \textsc{Hunt},\par
 	and\par
 	Dr.~Alasdair \textsc{Clarke}
@@ -81,6 +81,17 @@
 %% Itroduction
 \section*{Introduction}
 \addcontentsline{toc}{section}{Introduction}
+\paragraph{} Everyday we make use of our visual system in order to solve many problems. Whether these are to aid us in avoiding obstacles, or to find an item of importance, the ability to direct our attention proves invaluable. However, the extent to which we make these decisions in an optimal manner is subject to debate. 
+
+\paragraph{} \cite{najemnik2005optimal} argue that human performance in a visual search task is predicted by that of a model ideal observer. This model aimed to reduce uncertainty as to the location of a target item by deploying fixations to locations likely to contain the target and reduce the overall uncertainty of the search space. To do this, the model accounted for the loss of accuity for space further from the central fixation and using this information to reduce the amount of uncertainty to an appropriate extent. This in turn aids in finding a target as it would help in dissuading us from revisiting a location that we have already searched to an appropriate extent. 
+
+\paragraph{} This would suggest that we make decisions about where to fixate based on underlying scene statistics and account for our own limitations. However, this would seem to be a fairly resource intense process which begs the question as to whether this would be an appropriate solution to the problem of where to fixate. With this in mind, \cite{clarke2016stocha} suggest that human performance in a visual search task can be characterised by a stochastic process. Instead of engaing in a resource intense calculation of where to fixate, they suggest that we make eye movements that we like to make in a more stochastic process. 
+
+\paragraph{} As such, this leaves us with the question of whether we make principled fixations based on various factors, or whether we simply do what we like to do and fixate locations in a more random fashion. One way in which this question could be addressed is by simplay tasking people with making one sensible eye movement. If we fixate based on principle, then to complete a task such as this should prove to be trivial. 
+
+\paragraph{} Much to the contrary it appears that people do in fact tend to struggle at making one sensible eye movement \citep{morvan2012human,clarke2015failure}. \cite{morvan2012human} developed a paradigm in which participants were to make a single eye movement in order to give themselves the best chance of success at detecting whether a target dot was positioned at the top or the bottom of a box \textbf{\textit{(point to figure when you have one?)}}. To do this, three boxes were presented on screen. One in the centre, with two boxes either side. Participants were told that they were to fixate one of these boxes and that the target would then appear in one of the two side boxes. Throughout the experiment, these two side boxes would appear at difference eccentricities, sometimes being placed very close to the centre box, and at other times they would be a large distance from the central box. When the boxes were all close together, the optimal strategy would be to fixate the central box and use one's peripheral vision to detect the target. However, as the boxes separated, performance would begin to decrease. In this case, participants engaging in the optimal strategy would switch to focussing one of the two side boxes as this would then give them the best chance of success. 
+
+\paragraph{} The results of their experiment clearly demonstrated that people failed to perform this task in an optimal fashion. These results were further supported by \cite{clarke2015failure} who replicated this study with the addition of including other versions of the task that were not specific to eye movements. This would suggest that this failure is not constrained to optimal search, but more a general failure to maximise the chance of success. 
 
 \section*{Methods}
 \addcontentsline{toc}{section}{Methods}
@@ -109,7 +120,7 @@
 
 \section*{Results}
 \addcontentsline{toc}{section}{Results}
-\paragraph{} All analysis was carried out in R \citep{R} using the BRMS package \citep{brms2017,brms2018}. Comparison data was retrieved from \url{https://osf.io/t6c5q/} in order to compare the current study's data to a group without the presence of a clear goal, but who otherwise carried out the same task. The full methods and analysis of this comparison data can be found by following the link provided. 
+\paragraph{} All analysis was carried out in R \citep{R} using Rstan \citep{Rstan,Stan}. Comparison data was retrieved from \url{https://osf.io/t6c5q/} in order to compare the current study's data to a group without the presence of a clear goal, but who otherwise carried out the same task. The full methods and analysis of this comparison data can be found by following the link provided. 
 
 \paragraph{} For the purposes of this study, the first four blocks completed by participants in this comparison set were used. In the firsr four blocks of this other study, particiapnts either carried out the standard task as described in \cite{clarke2015failure}, or they were effectively instructed as to where they should fiated on each trial in order to achieve the optimal accuracy. The group without instructions is henceforth referred to as the "\textit{control}" group, and the instructed group as the "\textit{optimal}" group.
 

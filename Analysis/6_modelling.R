@@ -17,6 +17,9 @@ x_res <- 1920
 x_width <- 54
 ppcm <- x_res/x_width
 
+# NB: setting seed to make results reproducible
+set.seed(12345)
+
 #### Functions #### 
 # get visual degrees
 get_VisDegs <- function(size,distance){
@@ -148,8 +151,8 @@ m_stan_group <- stan(
   file = "modelling/models/stan_model.stan",
   data = stan_df,
   chains = 1,
-  warmup = 1000,
-  iter = 2000,
+  warmup = 2000,
+  iter = 4000,
   refresh = 100
 )
 
@@ -195,11 +198,24 @@ ggsave("../Figures/Model_stan_rawacc.png",
        width = 8)
 
 
+
+
+
+
+
+
+
+
 # get predictions for mu
 mu <- array(0, dim = c(nrow(samples$beta), nrow(X)))
 for (ii in 1:nrow(samples$beta)) {
   mu[ii, ] <- plogis(X %*% samples$beta[ii, ])
 }
+
+mu_df <- as.tibble(mu) %>%
+  `colnames<-`(c("control", "motivated", "optimal")) %>%
+  gather(key = "group",
+         value = "p_mu")
 
 # hdpi for mean
 hpdi_mu <- as.tibble(t(purrr::map_df(as.tibble(mu), hdi))) %>%
@@ -208,7 +224,65 @@ hpdi_mu <- as.tibble(t(purrr::map_df(as.tibble(mu), hdi))) %>%
   select(group, lower, upper)
 hpdi_mu
 
+# make mu plot 
+plt_mu <- mu_df %>%
+  ggplot(aes(p_mu, colour = group, fill = group)) +
+  geom_density(alpha= 0.3) + 
+  theme_minimal() + 
+  theme(legend.position = "bottom") + 
+  ggthemes::scale_color_ptol() +
+  ggthemes::scale_fill_ptol()
+plt_mu$labels$colour <- "Group"
+plt_mu$labels$fill <- "Group"
+plt_mu$labels$x <- "Predicted Mean Accuracy"
+plt_mu
 
+# extract density information for this? 
+mu_line <- data.frame(group = character(),
+                      x = numeric(),
+                      y = numeric())
+
+for(ii in unique(plt_mu[["data"]]$group)){
+  temp2 <- filter(plt_mu[["data"]][plt_mu[["data"]]$group == ii,])
+  
+  x <- density(temp2$p_mu)$x
+  y <- density(temp2$p_mu)$y
+  
+  mu_line <- rbind(mu_line, data.frame(group = ii,
+                                       x = x,
+                                       y = y))
+}
+# tidy 
+rm(ii, temp2, x, y)
+
+
+# Alasdair plot 
+plt_shaded_mu <- merge(mu_line, hpdi_mu) %>%
+  mutate(variable = ifelse(x > lower & x < upper, 1, 0))
+plt_shaded_mu <- ggplot(plt_posterior[["data"]],
+                        aes(colour = group,
+                            fill = group)) +
+  geom_line(aes(x, p)) + 
+  geom_area(data = filter(plt_shaded_mu, variable == 1), 
+            position = "dodge",
+            aes(x = x,
+                y = y),
+            alpha = 0.3) + 
+  theme_minimal() + 
+  theme(legend.position = "bottom") + 
+  ggthemes::scale_color_ptol() +
+  ggthemes::scale_fill_ptol() + 
+  scale_x_continuous(limits = c(0.5, 0.9))
+plt_shaded_mu$labels$colour <- "Group"
+plt_shaded_mu$labels$fill <- "Group"  
+plt_shaded_mu$labels$x <- "Predicted Accuracy"
+plt_shaded_mu$labels$y <- "Density"
+plt_shaded_mu
+
+  
+  
+
+# hpdi for posterior
 hpdi_dist <- post_preds_beta(m_stan_group, x_vals, X)$hpdi_dist %>%
   cbind(tibble(group = c("control", "motivated", "optimal"))) %>%
   remove_rownames() %>%
@@ -320,13 +394,18 @@ m_stan_group_exp <- stan(
   file = "modelling/models/stan_model.stan",
   data = stan_df,
   chains = 1,
-  warmup = 1000,
-  iter = 2000,
+  warmup = 2000,
+  iter = 4000,
   refresh = 100
 )
 
 # extract samples
 samples <- rstan::extract(m_stan_group_exp)
+
+
+
+
+
 
 #### PLOTTING: Predicted Accuracy ####
 # setup effs
@@ -340,10 +419,10 @@ x_vals <- seq(0,1-0.001,0.001)
 
 # plt posterior
 plt_posterior <- tibble(
-  Group = rep(unique(model_data_3$group), each = length(x_vals)),
+  group = rep(unique(model_data_3$group), each = length(x_vals)),
   x = rep(x_vals, 3),
   p = post_preds_beta(m_stan_group_exp, x_vals, X)$p) %>%
-  ggplot(aes(x, p, colour = Group, fill = Group)) + 
+  ggplot(aes(x, p, colour = group, fill = group)) + 
   #geom_line(aes(group = Group)) +
   geom_area(position = "dodge", alpha = 0.3) +
   theme_minimal() + 
@@ -353,12 +432,18 @@ plt_posterior <- tibble(
   theme(legend.position = "bottom")
 plt_posterior$labels$x <- "Predicted Mean Expected Accuracy"
 plt_posterior$labels$y <- "density"
-plt_posterior
+plt_posterior$labels$colour <- "Group"
+plt_posterior$labels$fill <- "Group"
+plt_posterior 
 
 # save 
 ggsave("../Figures/Model_stan_expacc.png",
        height = 5,
        width = 8)
+
+
+
+
 
 # work on HPDI stuff again 
 # for means
@@ -367,11 +452,73 @@ for (ii in 1:nrow(samples$beta)) {
   mu[ii, ] <- plogis(X %*% samples$beta[ii, ])
 }
 
+mu_df <- as.tibble(mu) %>%
+  `colnames<-`(c("control", "motivated", "optimal")) %>%
+  gather(key = "group",
+         value = "p_mu")
+
 hpdi_mu <- as.tibble(t(purrr::map_df(as.tibble(mu), hdi))) %>%
   cbind(tibble(group = c("control", "motivated", "optimal"))) %>%
   `colnames<-`(c("lower", "upper", "group")) %>%
   select(group, lower, upper)
 hpdi_mu
+
+plt_mu <- mu_df %>%
+  ggplot(aes(p_mu, colour = group, fill = group)) +
+  geom_density(alpha= 0.3) + 
+  theme_minimal() + 
+  theme(legend.position = "bottom") + 
+  ggthemes::scale_color_ptol() +
+  ggthemes::scale_fill_ptol()
+plt_mu$labels$colour <- "Group"
+plt_mu$labels$fill <- "Group"
+plt_mu$labels$x <- "Predicted Mean Accuracy"
+plt_mu
+
+# extract density information for this? 
+mu_line <- data.frame(group = character(),
+                      x = numeric(),
+                      y = numeric())
+
+for(ii in unique(plt_mu[["data"]]$group)){
+  temp2 <- filter(plt_mu[["data"]][plt_mu[["data"]]$group == ii,])
+  
+  x <- density(temp2$p_mu)$x
+  y <- density(temp2$p_mu)$y
+  
+  mu_line <- rbind(mu_line, data.frame(group = ii,
+                                       x = x,
+                                       y = y))
+}
+# tidy 
+rm(ii, temp2, x, y)
+
+
+# Alasdair plot 
+plt_shaded_mu <- merge(mu_line, hpdi_mu) %>%
+  mutate(variable = ifelse(x > lower & x < upper, 1, 0))
+plt_shaded_mu <- ggplot(plt_posterior[["data"]],
+                        aes(colour = group,
+                            fill = group)) +
+  geom_line(aes(x, p)) + 
+  geom_area(data = filter(plt_shaded_mu, variable == 1), 
+            position = "dodge",
+            aes(x = x,
+                y = y),
+            alpha = 0.3) + 
+  theme_minimal() + 
+  theme(legend.position = "bottom") + 
+  ggthemes::scale_color_ptol() +
+  ggthemes::scale_fill_ptol() + 
+  scale_x_continuous(limits = c(0.5, 0.9))
+plt_shaded_mu$labels$colour <- "Group"
+plt_shaded_mu$labels$fill <- "Group"  
+plt_shaded_mu$labels$x <- "Predicted Accuracy"
+plt_shaded_mu$labels$y <- "Density"
+plt_shaded_mu
+
+
+
 
 hpdi_dist <- post_preds_beta(m_stan_group_exp, x_vals, X)$hpdi_dist %>%
   cbind(tibble(Group = c("control", "motivated", "optimal"))) %>%

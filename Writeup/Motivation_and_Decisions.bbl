@@ -1,55 +1,71 @@
 \begin{thebibliography}{}
 
 \bibitem [\protect \citeauthoryear {%
-Bürkner%
-}{%
-Bürkner%
-}{%
+Carpenter%
+\ \protect \BOthers {.}}{%
+Carpenter%
+\ \protect \BOthers {.}}{%
 {\protect \APACyear {2017}}%
 }]{%
-brms2017}
+Stan}
 \APACinsertmetastar {%
-brms2017}%
+Stan}%
 \begin{APACrefauthors}%
-Bürkner, P\BPBI C.%
+Carpenter, B.%
+, Gelman, A.%
+, Hoffman, M.%
+, Lee, D.%
+, Goodrich, B.%
+, Betancourt, M.%
+\BDBL {}Riddell, A.%
 \end{APACrefauthors}%
 \unskip\
 \newblock
 \APACrefYearMonthDay{2017}{}{}.
 \newblock
-{\BBOQ}\APACrefatitle {{brms}: An {R} Package for {Bayesian} Multilevel Models
-  Using {Stan}} {{brms}: An {R} package for {Bayesian} multilevel models using
-  {Stan}}.{\BBCQ}
+{\BBOQ}\APACrefatitle {Stan: A Probabilistic Programming Language} {Stan: A
+  probabilistic programming language}.{\BBCQ}
 \newblock
-\APACjournalVolNumPages{Journal of Statistical Software}{80}{1}{1--28}.
+\APACjournalVolNumPages{Journal of Statistical Software,
+  Articles}{76}{1}{1--32}.
 \newblock
-\begin{APACrefDOI} \doi{10.18637/jss.v080.i01} \end{APACrefDOI}
+\begin{APACrefURL} \url{https://www.jstatsoft.org/v076/i01} \end{APACrefURL}
+\newblock
+\begin{APACrefDOI} \doi{10.18637/jss.v076.i01} \end{APACrefDOI}
 \PrintBackRefs{\CurrentBib}
 
 \bibitem [\protect \citeauthoryear {%
-Bürkner%
+Clarke%
+, Green%
+, Chantler%
+\BCBL {}\ \BBA {} Hunt%
 }{%
-Bürkner%
-}{%
-{\protect \APACyear {2018}}%
+Clarke%
+\ \protect \BOthers {.}}{%
+{\protect \APACyear {2016}}%
 }]{%
-brms2018}
+clarke2016stocha}
 \APACinsertmetastar {%
-brms2018}%
+clarke2016stocha}%
 \begin{APACrefauthors}%
-Bürkner, P\BPBI C.%
+Clarke, A\BPBI D\BPBI F.%
+, Green, P.%
+, Chantler, M\BPBI J.%
+\BCBL {}\ \BBA {} Hunt, A\BPBI R.%
 \end{APACrefauthors}%
 \unskip\
 \newblock
-\APACrefYearMonthDay{2018}{}{}.
+\APACrefYearMonthDay{2016}{}{}.
 \newblock
-{\BBOQ}\APACrefatitle {Advanced {Bayesian} Multilevel Modeling with the {R}
-  Package {brms}} {Advanced {Bayesian} multilevel modeling with the {R} package
-  {brms}}.{\BBCQ}
+{\BBOQ}\APACrefatitle {{Human search for a target on a textured background is
+  consistent with a stochastic model}} {{Human search for a target on a
+  textured background is consistent with a stochastic model}}.{\BBCQ}
 \newblock
-\APACjournalVolNumPages{The R Journal}{10}{1}{395--411}.
+\APACjournalVolNumPages{Journal of Vision}{16}{7}{4-4}.
 \newblock
-\begin{APACrefDOI} \doi{10.32614/RJ-2018-017} \end{APACrefDOI}
+\begin{APACrefURL} \url{https://doi.org/10.1167/16.7.4} \end{APACrefURL}
+\newblock
+\begin{APACrefDOI} \doi{10.1167/16.7.4} \end{APACrefDOI}
 \PrintBackRefs{\CurrentBib}
 
 \bibitem [\protect \citeauthoryear {%
@@ -110,6 +126,59 @@ Cornelissen, F\BPBI W.%
 \PrintBackRefs{\CurrentBib}
 
 \bibitem [\protect \citeauthoryear {%
+Morvan%
+\ \BBA {} Maloney%
+}{%
+Morvan%
+\ \BBA {} Maloney%
+}{%
+{\protect \APACyear {2012}}%
+}]{%
+morvan2012human}
+\APACinsertmetastar {%
+morvan2012human}%
+\begin{APACrefauthors}%
+Morvan, C.%
+\BCBT {}\ \BBA {} Maloney, L\BPBI T.%
+\end{APACrefauthors}%
+\unskip\
+\newblock
+\APACrefYearMonthDay{2012}{}{}.
+\newblock
+{\BBOQ}\APACrefatitle {Human visual search does not maximize the post-saccadic
+  probability of identifying targets} {Human visual search does not maximize
+  the post-saccadic probability of identifying targets}.{\BBCQ}
+\newblock
+\APACjournalVolNumPages{PLoS Comput Biol}{8}{2}{e1002342}.
+\PrintBackRefs{\CurrentBib}
+
+\bibitem [\protect \citeauthoryear {%
+Najemnik%
+\ \BBA {} Geisler%
+}{%
+Najemnik%
+\ \BBA {} Geisler%
+}{%
+{\protect \APACyear {2005}}%
+}]{%
+najemnik2005optimal}
+\APACinsertmetastar {%
+najemnik2005optimal}%
+\begin{APACrefauthors}%
+Najemnik, J.%
+\BCBT {}\ \BBA {} Geisler, W\BPBI S.%
+\end{APACrefauthors}%
+\unskip\
+\newblock
+\APACrefYearMonthDay{2005}{}{}.
+\newblock
+{\BBOQ}\APACrefatitle {Optimal eye movement strategies in visual search}
+  {Optimal eye movement strategies in visual search}.{\BBCQ}
+\newblock
+\APACjournalVolNumPages{Nature}{434}{7031}{387--391}.
+\PrintBackRefs{\CurrentBib}
+
+\bibitem [\protect \citeauthoryear {%
 Pelli%
 }{%
 Pelli%
@@ -157,6 +226,31 @@ R}%
 \APACaddressPublisher{Vienna, Austria}{}.
 \newblock
 \begin{APACrefURL} \url{https://www.R-project.org/} \end{APACrefURL}
+\PrintBackRefs{\CurrentBib}
+
+\bibitem [\protect \citeauthoryear {%
+{Stan Development Team}%
+}{%
+{Stan Development Team}%
+}{%
+{\protect \APACyear {2018}}%
+}]{%
+Rstan}
+\APACinsertmetastar {%
+Rstan}%
+\begin{APACrefauthors}%
+{Stan Development Team}.%
+\end{APACrefauthors}%
+\unskip\
+\newblock
+\APACrefYearMonthDay{2018}{}{}.
+\newblock
+\APACrefbtitle {{RStan}: the {R} interface to {Stan}.} {{RStan}: the {R}
+  interface to {Stan}.}
+\newblock
+\begin{APACrefURL} \url{http://mc-stan.org/} \end{APACrefURL}
+\newblock
+\APACrefnote{R package version 2.18.2}
 \PrintBackRefs{\CurrentBib}
 
 \end{thebibliography}
