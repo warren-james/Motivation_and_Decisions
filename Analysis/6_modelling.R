@@ -27,8 +27,8 @@ get_VisDegs <- function(size,distance){
 }
 
 # get posterior preds for beta dist 
-post_preds_beta <- function(m, x, m_matrix){
-  post <- rstan::extract(m)
+post_preds_beta <- function(model, x_vals, m_matrix){
+  post <- rstan::extract(model)
   
   beta <- colMeans(post$beta)
   gamma <- colMeans(post$gamma)
@@ -55,7 +55,7 @@ post_preds_beta <- function(m, x, m_matrix){
 
 
 # plt posterior_beta
-plt_post_beta <- function(model_df, values, model, m_matrix, lower){
+plt_post_beta <- function(model_df, values, model, m_matrix){
   plt_posterior <- tibble(
     group = rep(unique(model_df$group), each = length(values)),
     x = rep(values, 3),
@@ -74,9 +74,9 @@ plt_post_beta <- function(model_df, values, model, m_matrix, lower){
 # plotting mean effect 
 plt_mu_beta <- function(samples, m_matrix){
   # get mu estimates
-  mu <- array(0, dim = c(nrow(samples$beta), nrow(X)))
+  mu <- array(0, dim = c(nrow(samples$beta), nrow(m_matrix)))
   for (ii in 1:nrow(samples$beta)) {
-    mu[ii, ] <- plogis(X %*% samples$beta[ii, ])
+    mu[ii, ] <- plogis(m_matrix %*% samples$beta[ii, ])
   }
   
   # make data frame of this 
@@ -116,6 +116,7 @@ plt_shaded_mu_beta <- function(data_mu, data_hpdi, data_posterior){
                         x = numeric(),
                         y = numeric())
   
+  # get density profile
   for(ii in unique(data_mu$group)){
     temp <- filter(data_mu[data_mu$group == ii,])
     
@@ -153,8 +154,8 @@ plt_shaded_mu_beta <- function(data_mu, data_hpdi, data_posterior){
   return(plt_shaded_mu)
 }
 
-# plt differencefor means
-plt_diff_beta <- function(mu) {
+# plt difference for means
+plt_diff_beta <- function(mu){
   plt_diff <- tibble(control = mu[,1],
                      motivated = mu[,2],
                      optimal = mu[,3]) %>%
@@ -261,10 +262,6 @@ model_data_2 <- df_all%>%
 
 m_matrix <- model.matrix(accuracy ~ group, data = model_data_2)
 
-# setup data for plotting
-model_data_new <- model_data_2 %>%
-  rownames_to_column(var = "row_num")
-
 stan_df <- list(
   N = nrow(model_data_2),
   K = ncol(m_matrix),
@@ -363,10 +360,6 @@ model_data_3 <- df_all%>%
   summarise(pred_accuracy = mean(accuracy))
 
 m_matrix <- model.matrix(pred_accuracy ~ group, data = model_data_3)
-
-# setup data for plotting
-model_data_new <- model_data_3 %>%
-  rownames_to_column(var = "row_num")
 
 stan_df <- list(
   N = nrow(model_data_3),
@@ -601,7 +594,7 @@ HPDI_seg_d
 # 
 # 
 # 
-# #### Beta: Group only ####
+#### Beta: Group only ####
 # model_data_2 <- df_all%>%
 #   group_by(participant, group) %>%
 #   summarise(Accuracy = mean(correct)) %>%
@@ -666,7 +659,7 @@ HPDI_seg_d
 #             upper = HPDI(.prediction, 0.95)[2])
 # 
 # 
-# #### BRMS on expected accuracy ####
+#### BRMS on expected accuracy ####
 # model_data_3 <- df_all%>%
 #   group_by(participant, group) %>%
 #   summarise(pred_accuracy = mean(accuracy))
@@ -725,8 +718,8 @@ HPDI_seg_d
 # 
 # 
 # 
-# #### STAN ####
-# #### STAN: binomial ####
+#### STAN ####
+#### STAN: binomial ####
 # # setup contrasts myself  
 # df$motivated <- 0 
 # df$motivated[df$group == "motivated"] <- 1
