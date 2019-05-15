@@ -7,20 +7,16 @@ data {
  
 } parameters {
 
-  vector[K] beta ;  // coefs for mu
+  vector[K] beta ;  // matrix of coefs
 
 } transformed parameters {
 
-  vector<lower = 0, upper = 1>[N] mu; // transformed predictor for mu
+  //real mu;
 
-  for(i in 1:N){
-    mu[i] = inv_logit(X[i,] * beta);
-  }  
+  //mu = X * beta;  
 
 } model {
 
-  for(n in 1:N){
-    y[n] ~ bernoulli_logit(mu);
-  }
-
+  //y ~ bernoulli_logit(mu);
+  y ~ bernoulli_logit(X * beta);
 }

@@ -26,161 +26,6 @@ get_VisDegs <- function(size,distance){
   ((2*atan2(size,(2*distance)))*180)/pi
 }
 
-# get posterior preds for beta dist 
-post_preds_beta <- function(model, x_vals, m_matrix){
-  post <- rstan::extract(model)
-  
-  beta <- colMeans(post$beta)
-  gamma <- colMeans(post$gamma)
-  
-  mu  <- plogis(m_matrix %*% beta)
-  phi <- exp(m_matrix %*% gamma)
-  
-  A <- mu * phi 
-  B <- (1 - mu) * phi
-  
-  p <- unlist(map2(A, B, dbeta, x = x_vals))
-  
-  hpdi_dist <- data.frame(lower = numeric(),
-                          upper = numeric())
-  for(ii in 1:3){
-    temp <- as.numeric(HDInterval::hdi(rbeta(1000, A[ii], B[ii])))
-    hpdi_dist <- rbind(hpdi_dist, data.frame(lower = temp[1],
-                                             upper = temp[2]))
-  }
-  
-  result <- list("p" = p, "hpdi_dist" = hpdi_dist)
-  return(result)
-}
-
-
-# plt posterior_beta
-plt_post_beta <- function(model_df, values, model, m_matrix){
-  plt_posterior <- tibble(
-    group = rep(unique(model_df$group), each = length(values)),
-    x = rep(values, 3),
-    p = post_preds_beta(model, values, m_matrix)$p) %>%
-    ggplot(aes(x, p, colour = group, fill = group)) + 
-    geom_area(position = "dodge", alpha = 0.3) +
-    theme_minimal() +  
-    ggthemes::scale_color_ptol() + 
-    ggthemes::scale_fill_ptol() + 
-    theme(legend.position = "bottom")
-  plt_posterior$labels$x <- "Posterior Distribution"
-  plt_posterior$labels$y <- "density"
-  return(plt_posterior)
-}
-
-# plotting mean effect 
-plt_mu_beta <- function(samples, m_matrix){
-  # get mu estimates
-  mu <- array(0, dim = c(nrow(samples$beta), nrow(m_matrix)))
-  for (ii in 1:nrow(samples$beta)) {
-    mu[ii, ] <- plogis(m_matrix %*% samples$beta[ii, ])
-  }
-  
-  # make data frame of this 
-  mu_df <- as.tibble(mu) %>%
-    `colnames<-`(c("control", "motivated", "optimal")) %>%
-    gather(key = "group",
-           value = "p_mu")
-  
-  # get hdpi
-  hpdi_mu <- as.tibble(t(purrr::map_df(as.tibble(mu), hdi))) %>%
-    cbind(tibble(group = c("control", "motivated", "optimal"))) %>%
-    `colnames<-`(c("lower", "upper", "group")) %>%
-    select(group, lower, upper)
-  hpdi_mu
-  
-  # make plt
-  plt_mu <- mu_df %>%
-    ggplot(aes(p_mu, colour = group, fill = group)) +
-    geom_density(alpha= 0.3) + 
-    theme_minimal() + 
-    theme(legend.position = "bottom") + 
-    ggthemes::scale_color_ptol() +
-    ggthemes::scale_fill_ptol()
-  plt_mu$labels$colour <- "Group"
-  plt_mu$labels$fill <- "Group"
-  plt_mu$labels$x <- "Predicted Mean Accuracy"
-  plt_mu
-  
-  my_list <- list(mu, mu_df, hpdi_mu, plt_mu)
-  return(my_list)
-}
-
-# plt shaded_mu 
-plt_shaded_mu_beta <- function(data_mu, data_hpdi, data_posterior){
-  # get mu line
-  mu_line <- data.frame(group = character(),
-                        x = numeric(),
-                        y = numeric())
-  
-  # get density profile
-  for(ii in unique(data_mu$group)){
-    temp <- filter(data_mu[data_mu$group == ii,])
-    
-    x <- density(temp$p_mu)$x
-    y <- density(temp$p_mu)$y
-    
-    mu_line <- rbind(mu_line, data.frame(group = ii,
-                                         x = x,
-                                         y = y))
-  }
-  
-  # now make plot
-  plt_shaded_mu <- merge(mu_line, data_hpdi) %>%
-    mutate(variable = ifelse(x > lower & x < upper, 1, 0))
-  plt_shaded_mu <- ggplot(data_posterior,
-                          aes(colour = group,
-                              fill = group)) +
-    geom_line(aes(x, p)) + 
-    geom_area(data = filter(plt_shaded_mu, variable == 1), 
-              position = "dodge",
-              aes(x = x,
-                  y = y),
-              alpha = 0.3) + 
-    theme_minimal() + 
-    theme(legend.position = "bottom") + 
-    ggthemes::scale_color_ptol() +
-    ggthemes::scale_fill_ptol() + 
-    scale_x_continuous(limits = c(0.5, 0.9))
-  plt_shaded_mu$labels$colour <- "Group"
-  plt_shaded_mu$labels$fill <- "Group"  
-  plt_shaded_mu$labels$x <- "Predicted Accuracy"
-  plt_shaded_mu$labels$y <- "Density"
-  plt_shaded_mu
-  
-  return(plt_shaded_mu)
-}
-
-# plt difference for means
-plt_diff_beta <- function(mu){
-  plt_diff <- tibble(control = mu[,1],
-                     motivated = mu[,2],
-                     optimal = mu[,3]) %>%
-    mutate("Motivated - Control" = motivated - control,
-           "Optimal - Control" = optimal - control,
-           "Optimal - Motivated" = optimal - motivated) %>%
-    select(-control,
-           -motivated,
-           -optimal) %>%
-    gather(key = "Comparison",
-           value = "Difference") %>%
-    ggplot(aes(Difference,
-               colour = Comparison,
-               fill = Comparison)) +
-    geom_density(alpha = 0.3) +
-    geom_vline(xintercept = 0,
-               linetype = "dashed") +
-    ggthemes::scale_color_ptol() +
-    ggthemes::scale_fill_ptol() +
-    theme_minimal() +
-    theme(legend.position = "bottom")
-  
-  # return plt
-  return(plt_diff)
-}
 
 #### load in data ####
 load("scratch/all_data")
@@ -251,21 +96,23 @@ df_all%>%
   theme_minimal() +
   facet_wrap(~type) 
 
+# save this 
+save(df_all, file = "scratch/df_all")
 
 
 #### STAN: Beta ####
 #### STAN: Accuracy ~ group ####
 # replicating the BRMS version essentially
-model_data_2 <- df_all%>%
+model_data <- df_all%>%
   group_by(participant, group) %>%
   summarise(accuracy = mean(correct))
 
-m_matrix <- model.matrix(accuracy ~ group, data = model_data_2)
+m_matrix <- model.matrix(accuracy ~ group, data = model_data)
 
 stan_df <- list(
-  N = nrow(model_data_2),
+  N = nrow(model_data),
   K = ncol(m_matrix),
-  y = model_data_2$accuracy,
+  y = model_data$accuracy,
   X = m_matrix
 )
 
@@ -278,93 +125,28 @@ m_stan_group <- stan(
   refresh = 100
 )
 
+# save above
+save(model_data, file = "modelling/model_data/beta_1")
+save(m_stan_group, file = "modelling/model_outputs/m_stan_group_beta_1")
+
 # extract samples
 samples <- rstan::extract(m_stan_group)
 
 
 
 
-
-#### PLOTTING: Accuracy ~ group ####
-# posterior_preds
-# setup effects
-X <- tibble(intercept = c(1,1,1),
-            motivated = c(0,1,0),
-            optimal = c(0,0,1))
-X <- as.matrix(X)
-
-# sequence to estimate likelihood 
-x_vals <- seq(0,1-0.001,0.001)
-
-# plt posterior
-plt_posterior <- plt_post_beta(model_data_2, x_vals, m_stan_group, X)
-plt_posterior <- plt_posterior + 
-  scale_x_continuous(limits = c(0.5, 0.9)) + 
-  scale_y_continuous(breaks = seq(0,15,5))
-plt_posterior
-
-# save 
-ggsave("../Figures/Model_stan_rawacc.png",
-       height = 5,
-       width = 8)
-
-
-
-# get predictions for mu
-mu_list <- plt_mu_beta(samples, X)
-mu <- mu_list[[1]]
-mu_df <- mu_list[[2]]
-hpdi_mu <- mu_list[[3]]
-plt_mu <- mu_list[[4]]
-plt_mu
-
-# extract density information for this? 
-plt_shaded_mu <- plt_shaded_mu_beta(plt_mu[["data"]], hpdi_mu, plt_posterior[["data"]])
-plt_shaded_mu
-
-
-# looking at differences 
-plt_diff <- plt_diff_beta(mu)
-plt_diff
-
-# side by side for paper 
-plt_save <- gridExtra::grid.arrange(plt_posterior, plt_diff, ncol = 2)
-ggsave(plt_save, file = "../Figures/Model_stan_rawacc_compare.png",
-       height = 5,
-       width = 13)
-
-# compare with real data
-plt_real <- model_data_2 %>% 
-  ggplot(aes(accuracy, colour = group, fill = group)) + 
-  geom_histogram(position = "identity",
-                 bins = 20,
-                 alpha = 0.4) + 
-  theme_minimal() + 
-  theme(legend.position = "bottom") + 
-  ggthemes::scale_color_ptol() + 
-  ggthemes::scale_fill_ptol() 
-plt_real
-
-plt_both <- gridExtra::grid.arrange(plt_real, plt_posterior, nrow = 2)
-
-
-
-
-
-
-
 #### STAN: Predicted Accuracy ####
 # same as above but now on expected accuracy
-model_data_3 <- df_all%>%
+model_data <- df_all %>%
   group_by(participant, group) %>%
   summarise(pred_accuracy = mean(accuracy))
 
-m_matrix <- model.matrix(pred_accuracy ~ group, data = model_data_3)
+m_matrix <- model.matrix(pred_accuracy ~ group, data = model_data)
 
 stan_df <- list(
-  N = nrow(model_data_3),
+  N = nrow(model_data),
   K = ncol(m_matrix),
-  y = model_data_3$pred_accuracy,
+  y = model_data$pred_accuracy,
   X = m_matrix
 )
 
@@ -377,93 +159,39 @@ m_stan_group_exp <- stan(
   refresh = 100
 )
 
-# extract samples
-samples <- rstan::extract(m_stan_group_exp)
+save(model_data, file = "modelling/model_data/beta_2")
+save(m_stan_group_exp, file = "modelling/model_outputs/m_stan_group_beta_2")
 
 
 
-
-
-
-#### PLOTTING: Predicted Accuracy ####
-# plt posterior
-plt_posterior <- plt_post_beta(model_data_3, x_vals, m_stan_group_exp, X)
-plt_posterior <- plt_posterior + 
-  scale_x_continuous(limits = c(0.5, 0.9))
-plt_posterior
-
-# save 
-ggsave("../Figures/Model_stan_expacc.png",
-       height = 5,
-       width = 8)
-
-# work on HPDI stuff again 
-# for means
-mu_list <- plt_mu_beta(samples, X)
-mu_df <- mu_list[[2]]
-hpdi_mu <- mu_list[[3]]
-plt_mu <- mu_list[[4]]
-plt_mu
-
-
-# extract density information for this? 
-plt_shaded_mu <- plt_shaded_mu_beta(plt_mu[["data"]], hpdi_mu, plt_posterior[["data"]])
-plt_shaded_mu
-
-# looking at differences 
-plt_diff <- plt_diff_beta(mu)
-plt_diff
-
-# side by side for paper 
-plt_save <- gridExtra::grid.arrange(plt_posterior, plt_diff, ncol = 2)
-ggsave(plt_save, file = "../Figures/Model_stan_expacc_diff.png",
-       height = 5,
-       width = 13)
-
-# compare with real
-plt_real <- model_data_3 %>% 
-  ggplot(aes(pred_accuracy, colour = group, fill = group)) + 
-  geom_histogram(position = "identity",
-                 bins = 20,
-                 alpha = 0.4) + 
-  theme_minimal() + 
-  theme(legend.position = "bottom") + 
-  scale_x_continuous(limits = c(0.5,0.9)) +
-  ggthemes::scale_color_ptol() + 
-  ggthemes::scale_fill_ptol() 
-plt_real$labels$x <- "Expected Accuracy"
-plt_real$labels$colour <- "Group"
-plt_real$labels$fill <- "Group"
-
-plt_both <- gridExtra::grid.arrange(plt_real, plt_posterior, nrow = 2)
-
-ggsave(plt_both, file = "../Figures/Model_stan_expacc_compare.png",
-       height = 7,
-       width = 10)
 
 #### STAN: try bernoulli? ####
-model_data_4 <- df_all %>% 
+#### WIP: Needs some tweaking ####
+# real model 
+model_data <- df_all %>% 
   select(participant, group, correct)
 
-m_matrix <- model.matrix(correct ~ group, data = model_data_4)
+m_matrix <- model.matrix(correct ~ group, data = model_data)
 
 stan_df <- list(
-  N = nrow(model_data_4),
+  N = nrow(model_data),
   K = ncol(m_matrix),
-  y = model_data_4$correct,
+  y = model_data$correct,
   X = m_matrix
 )
 
 # WIP, takes far too long, not sure why
-# m_stan_berno <- stan(
-#   file = "modelling/models/stan_berno.stan",
-#   data = stan_df,
-#   chains = 1,
-#   warmup = 1000,
-#   iter = 2000,
-#   refresh = 100
-# )
+m_stan_berno <- stan(
+  file = "modelling/models/stan_berno.stan",
+  data = stan_df,
+  chains = 1,
+  warmup = 1000,
+  iter = 2000,
+  refresh = 100
+)
 
+save(model_data, file = "modelling/model_data/berno_1")
+save(m_stan_berno, file = "modelling/model_outputs/m_stan_berno_1")
 
 #### STAN: add in dist_type ####
 #### STAN: Actual Accuracy ####
