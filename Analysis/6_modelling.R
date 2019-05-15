@@ -302,11 +302,11 @@ plt_posterior <- plt_posterior +
   scale_x_continuous(limits = c(0.5, 0.9)) + 
   scale_y_continuous(breaks = seq(0,15,5))
 plt_posterior
+
 # save 
 ggsave("../Figures/Model_stan_rawacc.png",
        height = 5,
        width = 8)
-
 
 
 
@@ -441,8 +441,28 @@ ggsave(plt_both, file = "../Figures/Model_stan_expacc_compare.png",
        height = 7,
        width = 10)
 
+#### STAN: try bernoulli? ####
+model_data_4 <- df_all %>% 
+  select(participant, group, correct)
 
+m_matrix <- model.matrix(correct ~ group, data = model_data_4)
 
+stan_df <- list(
+  N = nrow(model_data_4),
+  K = ncol(m_matrix),
+  y = model_data_4$correct,
+  X = m_matrix
+)
+
+# WIP, takes far too long, not sure why
+# m_stan_berno <- stan(
+#   file = "modelling/models/stan_berno.stan",
+#   data = stan_df,
+#   chains = 1,
+#   warmup = 1000,
+#   iter = 2000,
+#   refresh = 100
+# )
 
 
 #### STAN: add in dist_type ####
