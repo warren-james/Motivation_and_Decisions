@@ -3,9 +3,11 @@
 #### Library ####
 library(brms)
 library(rethinking)
+library(psych)
 library(rstan)
 library(tidybayes)
 library(tidyverse)
+library(Rlab)
 
 #### constants ####
 Screen_dist <- 60
@@ -188,7 +190,8 @@ post_berno <- function(model, x_vals, m_matrix){
   mu <- m_matrix %*% beta
   
   # sort this to be a distribution over x_vals
-  p <- logistic(mu)
+  # ... not sure it will work with this one? 
+  p <- plogis(mu)
   
   
   return(p)
@@ -307,4 +310,45 @@ load("modelling/model_outputs/m_stan_berno_1")
 # get samples
 samples <- rstan::extract(m_stan_berno)
 
+# this is for mu
+posterior <- as.tibble(samples$beta) %>% 
+  `colnames<-`(c("beta_1", "beta_2", "beta_3")) %>%
+  mutate(control = logistic(beta_1), 
+         motivated = logistic(beta_1 + beta_2),
+         optimal = logistic(beta_1 + beta_3)) %>%
+  select(control, motivated, optimal) %>%
+  gather(key = "group",
+         value = "mu")
+
+# try a simulation using this method?
+beta <- colMeans(samples$beta)
+
+
+temp <- tibble(group = rep(c("control", "motivated", "optimal"), each = 1000))
+
+beta[2] <- beta[2] + beta[1]
+beta[3] <- beta[3] + beta[1]
+
+p <- c()
+for(ii in 1:3){
+  for(i in 1:1000){
+    est = sum(rbernoulli(1000, logistic(beta[ii])))/1000
+    p <- c(p, est)
+  }
+}
+temp <- cbind(temp, p)
+temp %>% 
+  ggplot(aes(p,
+             colour = group,
+             fill = group)) + 
+  geom_density(alpha = 0.3) + 
+  ggthemes::scale_color_ptol() + 
+  ggthemes::scale_fill_ptol() + 
+  theme_minimal() + 
+  theme(legend.position = "bottom")
+
+
+#### m2: correct ~ (group + dist_type)^2 ####
+load("modelling/model_data/berno_2")
+load("modelling/model_outputs/m_stan_berno_2")
 

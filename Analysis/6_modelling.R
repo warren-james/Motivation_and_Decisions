@@ -193,6 +193,33 @@ m_stan_berno <- stan(
 save(model_data, file = "modelling/model_data/berno_1")
 save(m_stan_berno, file = "modelling/model_outputs/m_stan_berno_1")
 
+#### STAN: add in dist_type Bernoulli ####
+model_data <- df_all %>%
+  select(participant, group, dist_type, correct)
+
+m_matrix <- model.matrix(correct ~ (group + dist_type)^2, data = model_data)
+
+stan_df <- list(
+  N = nrow(model_data),
+  K = ncol(m_matrix),
+  y = model_data$correct,
+  X = m_matrix
+)
+
+# WIP, takes far too long, not sure why
+m_stan_berno_dt <- stan(
+  file = "modelling/models/stan_berno.stan",
+  data = stan_df,
+  chains = 1,
+  warmup = 1000,
+  iter = 2000,
+  refresh = 100
+)
+
+save(model_data, file = "modelling/model_data/berno_2")
+save(m_stan_berno_dt, file = "modelling/model_outputs/m_stan_berno_2")
+
+
 #### STAN: add in dist_type ####
 #### STAN: Actual Accuracy ####
 model_data <- df_all %>% 
