@@ -223,8 +223,8 @@ plt_posterior
 
 # save 
 ggsave("../Figures/Model_stan_rawacc.png",
-       height = 5,
-       width = 8)
+       height = 3.5,
+       width = 5.6)
 
 
 
@@ -265,8 +265,8 @@ plt_posterior
 
 # save 
 ggsave("../Figures/Model_stan_expacc.png",
-       height = 5,
-       width = 8)
+       height = 3.5,
+       width = 5.6)
 
 
 
@@ -318,26 +318,44 @@ posterior <- as.tibble(samples$beta) %>%
          optimal = logistic(beta_1 + beta_3)) %>%
   select(control, motivated, optimal) %>%
   gather(key = "group",
-         value = "mu")
+         value = "mu") %>% 
+  ggplot(aes(mu,
+             colour = group,
+             fill = group)) + 
+  geom_density(alpha = 0.3)
+posterior
 
 # try a simulation using this method?
 beta <- colMeans(samples$beta)
+# beta <- samples$beta
 
-
-temp <- tibble(group = rep(c("control", "motivated", "optimal"), each = 1000))
+plt_berno <- tibble(group = rep(c("control", "motivated", "optimal"), each = 1000))
+# plt_berno <- tibble(group = rep(c("control", "motivated", "optimal"), each = 1000*100))
 
 beta[2] <- beta[2] + beta[1]
 beta[3] <- beta[3] + beta[1]
+# beta[,2] <- beta[,2] + beta[,1]
+# beta[,3] <- beta[,3] + beta[,1]
 
 p <- c()
-for(ii in 1:3){
-  for(i in 1:1000){
-    est = sum(rbernoulli(1000, logistic(beta[ii])))/1000
+for(y in 1:3){
+  for(ii in 1:1000){
+    est = sum(rbernoulli(1000, logistic(beta[y])))/1000
     p <- c(p, est)
   }
 }
-temp <- cbind(temp, p)
-temp %>% 
+
+
+# for(y in 1:3){
+#   for(x in 1:1000){
+#     for(ii in 1:100){
+#       est = sum(rbernoulli(1000, logistic(beta[x,y])))/1000
+#       p <- c(p, est)
+#     }
+#   }
+# }
+plt_berno <- cbind(plt_berno, p)
+plt_berno <- plt_berno %>% 
   ggplot(aes(p,
              colour = group,
              fill = group)) + 
@@ -346,9 +364,45 @@ temp %>%
   ggthemes::scale_fill_ptol() + 
   theme_minimal() + 
   theme(legend.position = "bottom")
-
+plt_berno
 
 #### m2: correct ~ (group + dist_type)^2 ####
+# setup effects 
+X <- tibble(control = rep(c(1,1,1),2),
+            motivated = rep(c(0,1,0),2),
+            optimal = rep(c(0,0,1),2),
+            control_f = rep(c(0,1), each = 3),
+            moti_f = ifelse(motivated == 1 & control_f == 1, 1, 0),
+            opt_f = ifelse(optimal == 1 & control_f == 1, 1, 0))
+
+X <- as.matrix(X)
+
+# load in models 
 load("modelling/model_data/berno_2")
 load("modelling/model_outputs/m_stan_berno_2")
 
+# get samples
+samples <- rstan::extract(m_stan_berno_dt)
+
+post_berno(m_stan_berno_dt, 1, X)
+
+beta <- colMeans(samples$beta)
+
+plt_berno <- tibble(group = rep(c("control", "motivated", "optimal"), each = 2000),
+                    dist_t = rep(c("close", "far"), each = 1000, 3))
+
+for(ii in 2:length(beta)){
+  beta[ii] <- beta[ii] + beta[1]
+}
+
+##### sort this ####
+# p <- c()
+# for(ii in 1:3){
+#   for
+#   for(i in 1:1000){
+#     est = sum(rbernoulli(1000, logistic(beta[ii])))/1000
+#     p <- c(p, est)
+#   }
+# }
+
+plt_berno <- cbind(plt_berno, p)

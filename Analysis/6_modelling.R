@@ -166,7 +166,6 @@ save(m_stan_group_exp, file = "modelling/model_outputs/m_stan_group_beta_2")
 
 
 #### STAN: try bernoulli? ####
-#### WIP: Needs some tweaking ####
 # real model 
 model_data <- df_all %>% 
   select(participant, group, correct)
@@ -219,6 +218,47 @@ m_stan_berno_dt <- stan(
 save(model_data, file = "modelling/model_data/berno_2")
 save(m_stan_berno_dt, file = "modelling/model_outputs/m_stan_berno_2")
 
+
+#### Using Binomial count data ####
+# trying to avoid throwing away data 
+
+# starting off with brms as this is a good way to start...
+m_brms_log <- brm(correct | trials(1) ~ group,
+                  data = df_all, 
+                  family = binomial,
+                  chains = 1,
+                  iter = 2000,
+                  warmup = 1000)
+
+m_brms_log_rint <- brm(correct | trials(1) ~ group + (1|participant),
+                       data = df_all, 
+                       family = binomial,
+                       chains = 1,
+                       iter = 2000,
+                       warmup = 1000)
+
+
+#### Bernoulli with rand intercepts ####
+# this might look better?
+# dist is wider for control which is a good start
+m_brms_bern <- brm(correct ~ group,
+                   data = df_all, 
+                   family = "bernoulli",
+                   chains = 1,
+                   iter = 2000,
+                   warmup = 1000)
+
+m_brms_bern_rint <- brm(correct ~ group + (1|participant),
+                        data = df_all, 
+                        family = "bernoulli",
+                        chains = 1,
+                        iter = 2000,
+                        warmup = 1000)
+
+# check this for how to write the stan code
+make_stancode(correct ~ group + (1|participant),
+              data = df_all, 
+              family = "bernoulli")
 
 #### STAN: add in dist_type ####
 #### STAN: Actual Accuracy ####
