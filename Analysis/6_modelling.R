@@ -192,6 +192,35 @@ m_stan_berno <- stan(
 save(model_data, file = "modelling/model_data/berno_1")
 save(m_stan_berno, file = "modelling/model_outputs/m_stan_berno_1")
 
+#### STAN: bernoulli with rand intercepts? ####
+model_data <- model_data %>% 
+  ungroup() %>%
+  mutate(participant = as.numeric(as.factor(participant)))
+
+# try random int version
+m_matrix <- model.matrix(correct ~ group, data = model_data)
+
+# setup stan_df
+stan_df <- list(
+  N = nrow(model_data),
+  K = ncol(m_matrix),
+  y = model_data$correct,
+  S = length(unique(model_data$participant)),
+  subj = model_data$participant,
+  X = m_matrix
+)
+
+# run model?
+# this seems to take a fair while... so some changes might need to be made...
+m_stan_berno <- stan(
+  file = "modelling/models/stan_berno_rint.stan",
+  data = stan_df,
+  chains = 1,
+  warmup = 1000,
+  iter = 2000,
+  refresh = 100
+)
+
 #### STAN: add in dist_type Bernoulli ####
 model_data <- df_all %>%
   select(participant, group, dist_type, correct)
