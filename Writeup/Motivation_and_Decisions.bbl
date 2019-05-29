@@ -291,6 +291,63 @@ Kahneman, D.%
 \PrintBackRefs{\CurrentBib}
 
 \bibitem [\protect \citeauthoryear {%
+Manohar%
+, Finzi%
+, Drew%
+\BCBL {}\ \BBA {} Husain%
+}{%
+Manohar%
+\ \protect \BOthers {.}}{%
+{\protect \APACyear {2017}}%
+}]{%
+manohar2017distinct}
+\APACinsertmetastar {%
+manohar2017distinct}%
+\begin{APACrefauthors}%
+Manohar, S\BPBI G.%
+, Finzi, R\BPBI D.%
+, Drew, D.%
+\BCBL {}\ \BBA {} Husain, M.%
+\end{APACrefauthors}%
+\unskip\
+\newblock
+\APACrefYearMonthDay{2017}{}{}.
+\newblock
+{\BBOQ}\APACrefatitle {Distinct motivational effects of contingent and
+  noncontingent rewards} {Distinct motivational effects of contingent and
+  noncontingent rewards}.{\BBCQ}
+\newblock
+\APACjournalVolNumPages{Psychological science}{28}{7}{1016--1026}.
+\PrintBackRefs{\CurrentBib}
+
+\bibitem [\protect \citeauthoryear {%
+Miranda%
+\ \BBA {} Palmer%
+}{%
+Miranda%
+\ \BBA {} Palmer%
+}{%
+{\protect \APACyear {2014}}%
+}]{%
+miranda2014intrinsic}
+\APACinsertmetastar {%
+miranda2014intrinsic}%
+\begin{APACrefauthors}%
+Miranda, A\BPBI T.%
+\BCBT {}\ \BBA {} Palmer, E\BPBI M.%
+\end{APACrefauthors}%
+\unskip\
+\newblock
+\APACrefYearMonthDay{2014}{}{}.
+\newblock
+{\BBOQ}\APACrefatitle {Intrinsic motivation and attentional capture from
+  gamelike features in a visual search task} {Intrinsic motivation and
+  attentional capture from gamelike features in a visual search task}.{\BBCQ}
+\newblock
+\APACjournalVolNumPages{Behavior Research Methods}{46}{1}{159--172}.
+\PrintBackRefs{\CurrentBib}
+
+\bibitem [\protect \citeauthoryear {%
 Morvan%
 \ \BBA {} Maloney%
 }{%
