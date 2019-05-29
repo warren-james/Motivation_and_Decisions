@@ -103,7 +103,7 @@ save(df_all, file = "scratch/df_all")
 #### STAN: Beta ####
 #### STAN: Accuracy ~ group ####
 # replicating the BRMS version essentially
-model_data <- df_all%>%
+model_data <- df_all %>%
   group_by(participant, group) %>%
   summarise(accuracy = mean(correct))
 
@@ -191,6 +191,33 @@ m_stan_berno <- stan(
 
 save(model_data, file = "modelling/model_data/berno_1")
 save(m_stan_berno, file = "modelling/model_outputs/m_stan_berno_1")
+
+#### STAN: add in block... #### 
+# maybe people in the motivated condition stayed more accurate for longer?
+model_data <- df_all %>%
+  select(participant, group, block, correct)
+
+m_matrix <- model.matrix(correct ~ (group + block)^2, data = model_data)
+
+stan_df <- list(
+  N = nrow(model_data),
+  K = ncol(m_matrix),
+  y = model_data$correct,
+  X = m_matrix
+)
+
+# WIP, takes far too long, not sure why
+m_stan_berno_blk <- stan(
+  file = "modelling/models/stan_berno.stan",
+  data = stan_df,
+  chains = 1,
+  warmup = 1000,
+  iter = 2000,
+  refresh = 100
+)
+
+# no need to worry, this doesn't contribute much 
+# the effect of block pretty much overlaps with 0 for all groups
 
 #### STAN: bernoulli with rand intercepts? ####
 model_data <- model_data %>% 

@@ -159,6 +159,33 @@ Cornelissen, F\BPBI W.%
 \PrintBackRefs{\CurrentBib}
 
 \bibitem [\protect \citeauthoryear {%
+Engelmann%
+\ \BBA {} Pessoa%
+}{%
+Engelmann%
+\ \BBA {} Pessoa%
+}{%
+{\protect \APACyear {2007}}%
+}]{%
+engelmann2007motivation}
+\APACinsertmetastar {%
+engelmann2007motivation}%
+\begin{APACrefauthors}%
+Engelmann, J\BPBI B.%
+\BCBT {}\ \BBA {} Pessoa, L.%
+\end{APACrefauthors}%
+\unskip\
+\newblock
+\APACrefYearMonthDay{2007}{}{}.
+\newblock
+{\BBOQ}\APACrefatitle {" Motivation sharpens exogenous spatial attention":
+  Correction to Engelmann and Pessoa (2007).} {" motivation sharpens exogenous
+  spatial attention": Correction to engelmann and pessoa (2007).}{\BBCQ}
+\newblock
+\APACjournalVolNumPages{Emotion}{7}{4}{875}.
+\PrintBackRefs{\CurrentBib}
+
+\bibitem [\protect \citeauthoryear {%
 Gigerenzer%
 \ \BBA {} Gaissmaier%
 }{%
