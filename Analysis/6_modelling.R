@@ -81,7 +81,8 @@ rm(acc_sep_1, acc_sep_2)
 #### remove participant that didn't complete 4 blocks ####
 df_all <- df_all %>%
   group_by(participant) %>%
-  filter(max(block) == 4)
+  filter(max(block) == 4) %>% 
+  ungroup()
 
 # plot something to check 
 df_all%>% 
@@ -105,7 +106,8 @@ save(df_all, file = "scratch/df_all")
 # replicating the BRMS version essentially
 model_data <- df_all %>%
   group_by(participant, group) %>%
-  summarise(accuracy = mean(correct))
+  summarise(accuracy = mean(correct)) %>% 
+  ungroup()
 
 m_matrix <- model.matrix(accuracy ~ group, data = model_data)
 
@@ -139,7 +141,8 @@ samples <- rstan::extract(m_stan_group)
 # same as above but now on expected accuracy
 model_data <- df_all %>%
   group_by(participant, group) %>%
-  summarise(pred_accuracy = mean(accuracy))
+  summarise(pred_accuracy = mean(accuracy)) %>%
+  ungroup()
 
 m_matrix <- model.matrix(pred_accuracy ~ group, data = model_data)
 
@@ -163,12 +166,45 @@ save(model_data, file = "modelling/model_data/beta_2")
 save(m_stan_group_exp, file = "modelling/model_outputs/m_stan_group_beta_2")
 
 
+#### STAN: acc ~ group * acc_type ####
+model_data <- df_all %>% 
+  group_by(participant, group) %>% 
+  summarise(Raw = mean(correct),
+            Predicted = mean(accuracy)) %>% 
+  gather(c(Raw, Predicted),
+         key = "acc_type",
+         value = "accuracy") %>% 
+  ungroup()
 
+# model_matrix 
+m_matrix <- model.matrix(accuracy ~ (group + acc_type)^2,
+                         data = model_data)
+
+# stan_df
+stan_df <- list(
+  N = nrow(model_data),
+  K = ncol(m_matrix),
+  y = model_data$accuracy,
+  X = m_matrix
+)
+
+m_stan_both <- stan(
+  file = "modelling/models/stan_model.stan",
+  data = stan_df,
+  chains = 1,
+  warmup = 1000,
+  iter = 2000,
+  refresh = 100
+)
+
+# save 
+save(model_data, file = "modelling/model_data/beta_3")
+save(m_stan_both, file = "modelling/model_outputs/m_stan_both")
 
 #### STAN: try bernoulli? ####
 # real model 
 model_data <- df_all %>% 
-  select(participant, group, correct)
+  select(participant, group, correct) 
 
 m_matrix <- model.matrix(correct ~ group, data = model_data)
 

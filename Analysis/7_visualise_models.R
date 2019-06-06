@@ -41,7 +41,7 @@ post_preds_beta <- function(model, x_vals, m_matrix){
   
   hpdi_dist <- data.frame(lower = numeric(),
                           upper = numeric())
-  for(ii in 1:3){
+  for(ii in 1:ncol(m_matrix)){
     temp <- as.numeric(HDInterval::hdi(rbeta(1000, A[ii], B[ii])))
     hpdi_dist <- rbind(hpdi_dist, data.frame(lower = temp[1],
                                              upper = temp[2]))
@@ -54,41 +54,114 @@ post_preds_beta <- function(model, x_vals, m_matrix){
 
 # plt posterior_beta
 plt_post_beta <- function(model_df, values, model, m_matrix){
-  plt_posterior <- tibble(
-    group = rep(unique(model_df$group), each = length(values)),
-    x = rep(values, 3),
-    p = post_preds_beta(model, values, m_matrix)$p) %>%
+  # making it more flexible...
+  # should now be able to handle a bunch of variables
+  list_unique <- c()
+  list_names <- c()
+  effects <- model_df %>%
+    ungroup() %>%
+    select(-1, -ncol(model_df))
+  for(ii in colnames(effects)){
+    list_unique <- c(list_unique, length(unique(effects[[ii]])))
+    list_names <- c(list_names, ii)
+  }
+  # list_product 
+  list_product <- prod(list_unique)
+  # sort out list for appropriate list building
+  if(length(list_unique)>1){
+    list_unique <- abs(list_unique - sum(list_unique))  
+  } else {
+    list_unique = 1
+  }
+  
+  plt_dat <- tibble(remove = rep(0, prod(list_unique)))
+  count <- 0
+  for(ii in list_names){
+    count <- count + 1
+    if(count == 1){
+      temp <- rep(unique(effects[[ii]]), each = length(values)*list_unique[count])
+    } else {
+      temp <- rep(rep(unique(effects[[ii]]), each = length(values)), list_unique[count])
+    }
+    
+    plt_dat <- cbind(plt_dat, temp)
+  }
+  plt_posterior <- plt_dat %>%
+    `colnames<-`(c("remove", unique(list_names))) %>%
+    select(-remove) %>%
+    mutate(x = rep(values, list_product),
+           p = post_preds_beta(model, values, m_matrix)$p) %>%
+  
+  # plt_posterior <- tibble(
+  #   group = rep(unique(model_df$group), each = length(values)),
+  #   x = rep(values, 3),
+  #   p = post_preds_beta(model, values, m_matrix)$p) %>%
     ggplot(aes(x, p, colour = group, fill = group)) + 
     geom_area(position = "dodge", alpha = 0.3) +
-    theme_minimal() +  
-    ggthemes::scale_color_ptol() + 
-    ggthemes::scale_fill_ptol() + 
+    # theme_minimal() +  
+    # ggthemes::scale_color_ptol() + 
+    # ggthemes::scale_fill_ptol() + 
+    see::theme_modern() +
+    see::scale_color_flat() +
+    see::scale_fill_flat() +
     theme(legend.position = "bottom")
+  if(length(list_names)>1){
+    plt_posterior <- plt_posterior + facet_wrap(~acc_type)
+  }
+  
   plt_posterior$labels$x <- "Posterior Distribution"
   plt_posterior$labels$y <- "density"
   return(plt_posterior)
 }
 
 # plotting mean effect 
-plt_mu_beta <- function(samples, m_matrix){
+#### NB: Need to work on this to extract HPDI ####
+# Kind of works... but something's not quite right with the output 
+# just yet. Seems to not like taking multiple predictors...
+plt_mu_beta <- function(samples, m_matrix, model_df){
   # get mu estimates
   mu <- array(0, dim = c(nrow(samples$beta), nrow(m_matrix)))
   for (ii in 1:nrow(samples$beta)) {
     mu[ii, ] <- plogis(m_matrix %*% samples$beta[ii, ])
   }
   
+  # get column names 
+  col_names <- model_df %>% 
+    select(-1, -ncol(model_df))
+  col_names <- colnames(col_names)
+  
+  # should help?
+  mu_df <- as.tibble(mu) %>% 
+    `colnames<-`(colnames(m_matrix)) %>%
+    gather(key = "temp",
+           value = "p_mu") %>% 
+    separate(temp, 
+             col_names,
+             sep = ":")
+  
+  # should help?  
+  hpdi_mu <- as.tibble(t(purrr::map_df(as.tibble(mu), hdi))) %>% 
+    cbind(tibble(temp = colnames(m_matrix))) %>% 
+    `colnames<-`(c("lower", "upper", "temp")) %>% 
+    separate(temp,
+             col_names,
+             sep = ":")
+  
+  
   # make data frame of this 
-  mu_df <- as.tibble(mu) %>%
-    `colnames<-`(c("control", "motivated", "optimal")) %>%
-    gather(key = "group",
-           value = "p_mu")
+  # mu_df <- as.tibble(mu) %>%
+  #   `colnames<-`(c("control", "motivated", "optimal")) %>%
+  #   gather(key = "group",
+  #          value = "p_mu")
   
   # get hdpi
-  hpdi_mu <- as.tibble(t(purrr::map_df(as.tibble(mu), hdi))) %>%
-    cbind(tibble(group = c("control", "motivated", "optimal"))) %>%
-    `colnames<-`(c("lower", "upper", "group")) %>%
-    select(group, lower, upper)
-  hpdi_mu
+  # hpdi_mu <- as.tibble(t(purrr::map_df(as.tibble(mu), hdi))) %>%
+  #   cbind(tibble(group = c("control", "motivated", "optimal"))) %>%
+  #   `colnames<-`(c("lower", "upper", "group")) %>%
+  #   select(group, lower, upper)
+  # hpdi_mu
+  
+
   
   # make plt
   plt_mu <- mu_df %>%
@@ -98,6 +171,9 @@ plt_mu_beta <- function(samples, m_matrix){
     theme(legend.position = "bottom") + 
     ggthemes::scale_color_ptol() +
     ggthemes::scale_fill_ptol()
+  if(length(col_names) > 1){
+    plt_mu <- plt_mu + facet_wrap(~mu_df[[col_names[[2]]]])
+  }
   plt_mu$labels$colour <- "Group"
   plt_mu$labels$fill <- "Group"
   plt_mu$labels$x <- "Predicted Mean Accuracy"
@@ -229,7 +305,7 @@ ggsave("../Figures/Model_stan_rawacc.png",
 
 
 # get predictions for mu
-mu_list <- plt_mu_beta(samples, X)
+mu_list <- plt_mu_beta(samples, X, model_data)
 mu <- mu_list[[1]]
 mu_df <- mu_list[[2]]
 hpdi_mu <- mu_list[[3]]
@@ -271,7 +347,7 @@ ggsave("../Figures/Model_stan_expacc.png",
 
 
 # get predictions for mu
-mu_list <- plt_mu_beta(samples, X)
+mu_list <- plt_mu_beta(samples, X, model_data)
 mu <- mu_list[[1]]
 mu_df <- mu_list[[2]]
 hpdi_mu <- mu_list[[3]]
@@ -293,6 +369,43 @@ ggsave(plt_save, file = "../Figures/Model_stan_expacc_compare.png",
        height = 5,
        width = 13)
 
+#### m3: Acc ~ (group + acc_type)^2 ####
+load("modelling/model_outputs/m_stan_both")
+load("modelling/model_data/beta_3")
+
+# setup effects 
+X <- data.frame(group = rep(c("Control", "Motivated", "Optimal"), each = 2),
+                acc_type = rep(c("Raw", "Prediced"), 3),
+                acc = rep(1, 6))
+X <- as.matrix(model.matrix(acc ~ (group + acc_type)^2, data = X))
+colnames(X) <- c("Control:Raw",
+                 "Motivated:Raw",
+                 "Optimal:Raw",
+                 "Control:Predicted",
+                 "Motivated:Predicted",
+                 "Optimal:Predicted")
+# this should work... otherwise we can do it by hand... 
+
+# sequence to predict over 
+x_vals <- seq(0,1-0.001, 0.001)
+
+# get samples 
+samples <- rstan::extract(m_stan_both)
+
+plt_posterior <- plt_post_beta(model_data, x_vals, m_stan_both, X)
+plt_posterior <- plt_posterior + 
+  scale_x_continuous(limits = c(0.5, 0.9)) + 
+  scale_y_continuous(breaks = seq(0,15,5))
+plt_posterior
+
+# hpdi etc
+mu_list <- plt_mu_beta(samples, X, model_data)
+mu <- mu_list[[1]]
+mu_df <- mu_list[[2]]
+hpdi_mu <- mu_list[[3]]
+plt_mu <- mu_list[[4]]
+plt_mu
+
 #### BERNOULLI ####
 # setup effects
 X <- tibble(intercept = c(1,1,1),
@@ -302,6 +415,13 @@ X <- as.matrix(X)
 
 # sequence to estimate likelihood 
 x_vals <- seq(0,1-0.001,0.001)
+
+# try this...
+plt_posterior <- plt_post_beta(model_data, x_vals, m_stan_both, X)
+plt_posterior <- plt_posterior + 
+  scale_x_continuous(limits = c(0.5, 0.9)) + 
+  scale_y_continuous(breaks = seq(0,15,5))
+plt_posterior
 
 #### m1: correct ~ group ####
 load("modelling/model_data/berno_1")
