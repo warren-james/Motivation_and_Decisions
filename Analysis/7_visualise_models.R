@@ -98,12 +98,12 @@ plt_post_beta <- function(model_df, values, model, m_matrix){
   #   p = post_preds_beta(model, values, m_matrix)$p) %>%
     ggplot(aes(x, p, colour = group, fill = group)) + 
     geom_area(position = "dodge", alpha = 0.3) +
-    # theme_minimal() +  
-    # ggthemes::scale_color_ptol() + 
-    # ggthemes::scale_fill_ptol() + 
-    see::theme_modern() +
-    see::scale_color_flat() +
-    see::scale_fill_flat() +
+    theme_minimal() +
+    ggthemes::scale_color_ptol() +
+    ggthemes::scale_fill_ptol() +
+    # see::theme_modern() +
+    # see::scale_color_flat() +
+    # see::scale_fill_flat() +
     theme(legend.position = "bottom")
   if(length(list_names)>1){
     plt_posterior <- plt_posterior + facet_wrap(~acc_type)
@@ -115,9 +115,6 @@ plt_post_beta <- function(model_df, values, model, m_matrix){
 }
 
 # plotting mean effect 
-#### NB: Need to work on this to extract HPDI ####
-# Kind of works... but something's not quite right with the output 
-# just yet. Seems to not like taking multiple predictors...
 plt_mu_beta <- function(samples, m_matrix, model_df){
   # get mu estimates
   mu <- array(0, dim = c(nrow(samples$beta), nrow(m_matrix)))
@@ -378,11 +375,17 @@ X <- data.frame(group = rep(c("Control", "Motivated", "Optimal"), each = 2),
                 acc_type = rep(c("Raw", "Prediced"), 3),
                 acc = rep(1, 6))
 X <- as.matrix(model.matrix(acc ~ (group + acc_type)^2, data = X))
+# colnames(X) <- c("Control:Raw",
+#                  "Motivated:Raw",
+#                  "Optimal:Raw",
+#                  "Control:Predicted",
+#                  "Motivated:Predicted",
+#                  "Optimal:Predicted")
 colnames(X) <- c("Control:Raw",
-                 "Motivated:Raw",
-                 "Optimal:Raw",
                  "Control:Predicted",
+                 "Motivated:Raw",
                  "Motivated:Predicted",
+                 "Optimal:Raw",
                  "Optimal:Predicted")
 # this should work... otherwise we can do it by hand... 
 
@@ -396,6 +399,8 @@ plt_posterior <- plt_post_beta(model_data, x_vals, m_stan_both, X)
 plt_posterior <- plt_posterior + 
   scale_x_continuous(limits = c(0.5, 0.9)) + 
   scale_y_continuous(breaks = seq(0,15,5))
+plt_posterior$labels$colour <- ""
+plt_posterior$labels$fill <- ""
 plt_posterior
 
 # hpdi etc
@@ -404,6 +409,8 @@ mu <- mu_list[[1]]
 mu_df <- mu_list[[2]]
 hpdi_mu <- mu_list[[3]]
 plt_mu <- mu_list[[4]]
+plt_mu$labels$colour <- ""
+plt_mu$labels$fill <- ""
 plt_mu
 
 #### BERNOULLI ####

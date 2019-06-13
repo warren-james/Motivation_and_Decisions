@@ -94,7 +94,7 @@ get_Fish <- function(dataframe){
 # read in penguin data 
 load("scratch/switch_nar_data")
 # remove participant that didn't complete 4 blocks #
-switch_df <- switch_df %>%
+switch_df_all<- switch_df_all%>%
   group_by(participant) %>%
   filter(max(block) == 4) %>%
   ungroup()
@@ -162,13 +162,13 @@ df_penguin <- df_penguin %>%
          group)
 
 # sort participants 
-df <- rbind(df_control, df_optimal) %>%
+df_all <- rbind(df_control, df_optimal) %>%
   rbind(df_penguin) %>%
   mutate(participant = paste(participant, group, sep = "_"),
-         dist_type = ifelse(df$separation > round(as.numeric(df$switch_point)), "far", "close"))
+         dist_type = ifelse(separation > round(as.numeric(switch_point)), "far", "close"))
 
 # save this
-save(df, file = "scratch/all_data")
+save(df_all, file = "scratch/all_data")
 
 #### get groupID for acc_sep file ####
 df_groupID <- rbind(df_control, df_optimal) %>%
@@ -184,7 +184,7 @@ save(df_groupID, file = "scratch/df_groupID")
 # this might be a bit dumb... and really crude... but ah well
 # might need to work on the scripts for working out the score etc
 # as it seems to overestimate somewhat 
-plt_fish <- df %>%
+plt_fish <- df_all %>%
   group_by(participant, group) %>%
   summarise(Score = max(num_fish)) %>% 
   ggplot(aes(Score,
@@ -194,7 +194,7 @@ plt_fish
 
 #### PLOTS: overall acc ####
 # acc plot 
-plt_acc <- df %>%
+plt_acc <- df_all %>%
   group_by(participant, group) %>%
   summarise(Accuracy = mean(correct)) %>%
   ungroup() %>%
@@ -210,7 +210,7 @@ plt_acc
 
 #### PLOTS: acc ~ dist_type ####
 # try adding in dist type as a wrap?
-plt_acc_dist <- df %>%
+plt_acc_dist <- df_all %>%
   group_by(participant, group, dist_type) %>%
   summarise(Accuracy = mean(correct)) %>%
   ungroup() %>%
@@ -226,24 +226,52 @@ plt_acc_dist
 
 
 #### Same plots as always ####
-plt_pos_optimal <- df %>%
+#### Need to add in switch_lines ####
+df_all <- df_all %>% 
+  rowwise() %>%
+  mutate(switch_point = as.numeric(switch_point), 
+         switch_line = ifelse(separation <= switch_point, 0, 1)) %>% 
+  ungroup()
+
+switch_line <- df_all %>% 
+  group_by(participant) %>% 
+  summarise(max_delta = max(separation),
+            min_delta = min(separation),
+            switch_point = mean(as.numeric(switch_point)))
+
+acc_sep = tibble(participant = character(),
+                 separation = numeric(),
+                 opt_pos = numeric())
+for(p in unique(switch_line$participant)){
+  switch = switch_line$switch_point[switch_line$participant == p,]
+  max_d = switch_line$max_delta[switch_line$participant == p,]
+  min_d = switch_line$min_delta[switch_line$participant == p,]
+  
+}
+
+plt_pos_optimal <- df_all %>%
   group_by(participant, separation, group) %>%
-  summarise(centre = mean(centre)) %>%
+  summarise(centre = mean(centre),
+            switch_line = mean(switch_line)) %>%
   mutate(side = 1 - centre) %>%
   filter(group == "optimal") %>%
   ggplot(aes(get_VisDegs(separation/ppcm, Screen_dist),
              side,
              colour = group)) + 
   geom_point() + 
+  geom_line(aes(get_VisDegs(separation/ppcm, Screen_dist),
+                switch_line),
+                colour = "black") +
   theme_bw() + 
-  theme(strip.text.x = element_blank()) +
+  theme(strip.text.x = element_blank(),
+        legend.position = "none") +
+  ggtitle("Optimal") +
   facet_wrap(~group + participant, ncol = 6) + 
   scale_colour_manual(values = "#CC6677")
 plt_pos_optimal$labels$y <- ""
 plt_pos_optimal$labels$x <- "Delta (Visual Degrees)"
-plt_pos_optimal$labels$colour <- ""
 
-plt_pos_motivated <- df %>%
+plt_pos_motivated <- df_all %>%
   group_by(participant, separation, group) %>%
   summarise(centre = mean(centre)) %>%
   mutate(side = 1 - centre) %>%
@@ -253,14 +281,15 @@ plt_pos_motivated <- df %>%
              colour = group)) + 
   geom_point() + 
   theme_bw() + 
-  theme(strip.text.x = element_blank()) +
+  theme(strip.text.x = element_blank(),
+        legend.position = "none") +
+  ggtitle("Motivated") +
   facet_wrap(~group + participant, ncol = 6) + 
   scale_colour_manual(values = "#DDCC77")
 plt_pos_motivated$labels$y <- "Proportion of Fixations to the side"
 plt_pos_motivated$labels$x <- "" 
-plt_pos_motivated$labels$colour <- ""
 
-plt_pos_control <- df %>%
+plt_pos_control <- df_all%>%
   group_by(participant, separation, group) %>%
   summarise(centre = mean(centre)) %>%
   mutate(side = 1 - centre) %>%
@@ -270,14 +299,18 @@ plt_pos_control <- df %>%
              colour = group)) + 
   geom_point() + 
   theme_bw() + 
-  theme(strip.text.x = element_blank()) +
+  theme(strip.text.x = element_blank(),
+        legend.position = "none") +
+  ggtitle("Control") +
   facet_wrap(~group + participant, ncol = 6) + 
   scale_colour_manual(values = "#4477AA")
 plt_pos_control$labels$y <- ""
 plt_pos_control$labels$x <- ""
-plt_pos_control$labels$colour <- "Group"
 
-plt <- gridExtra::grid.arrange(plt_pos_control, plt_pos_motivated, plt_pos_optimal)
+plt <- gridExtra::grid.arrange(plt_pos_control,
+                               plt_pos_motivated,
+                               plt_pos_optimal,
+                               heights = c(2.2,3,2.2))
 
 
 ggsave(file = "../Figures/Part_2_all_groups.png", plt,
