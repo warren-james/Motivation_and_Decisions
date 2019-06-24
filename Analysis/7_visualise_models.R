@@ -273,7 +273,7 @@ post_berno <- function(model, x_vals, m_matrix){
 #### PLOTTING MODELS ####
 #### BETA ####
 # setup effects
-X <- tibble(intercept = c(1,1,1),
+X <- tibble(control = c(1,1,1),
             motivated = c(0,1,0),
             optimal = c(0,0,1))
 X <- as.matrix(X)
@@ -375,12 +375,6 @@ X <- data.frame(group = rep(c("Control", "Motivated", "Optimal"), each = 2),
                 acc_type = rep(c("Raw", "Prediced"), 3),
                 acc = rep(1, 6))
 X <- as.matrix(model.matrix(acc ~ (group + acc_type)^2, data = X))
-# colnames(X) <- c("Control:Raw",
-#                  "Motivated:Raw",
-#                  "Optimal:Raw",
-#                  "Control:Predicted",
-#                  "Motivated:Predicted",
-#                  "Optimal:Predicted")
 colnames(X) <- c("Control:Raw",
                  "Control:Predicted",
                  "Motivated:Raw",

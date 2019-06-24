@@ -90,9 +90,9 @@ get_Fish <- function(dataframe){
 }
 
 # make position plot 
-plt_pos <- function(data, condition, palette, switch_frame){
+plt_pos <- function(data, condition, palette, switch_frame, ordered){
   plt <- data %>% 
-    group_by(participant, separation, group) %>% 
+    group_by(participant, separation, group, order_cent) %>% 
     summarise(side = 1 - mean(centre)) %>% 
     filter(group == condition) %>%
     ggplot(aes(get_VisDegs(separation/ppcm, Screen_dist),
@@ -103,10 +103,16 @@ plt_pos <- function(data, condition, palette, switch_frame){
                   opt_pos),
               colour = "black") + 
     geom_point() + 
-    theme(strip.text.x = element_blank(), 
+    theme_bw() + 
+    theme(strip.text.x = element_blank(),
           legend.position = "none") +
-    facet_wrap(~group + participant, ncol = 6) + 
-    scale_colour_manual(values = palette)
+    scale_colour_manual(values = palette) + 
+    scale_y_continuous(breaks = c(0,0.5,1))
+  if(ordered == TRUE){
+    plt <- plt + facet_wrap(~ order_cent + participant, ncol = 6) 
+  } else { 
+    plt <- plt + facet_wrap(~participant, ncol = 6)
+  }
   return(plt)
 }
 
@@ -277,22 +283,32 @@ for(p in unique(switch_line$participant)){
                                          opt_pos = opt_pos))
   }
 }
+
+# sort out ordering 
+# this doesn't seem to work...
+df_order <- df_all %>% 
+  group_by(participant) %>% 
+  summarise(order_cent = 1 - mean(centre)) 
+
+df_all <- merge(df_all, df_order)
+acc_sep <- merge(acc_sep, df_order)
 acc_sep_opt <- acc_sep[acc_sep$group == "optimal",]
 acc_sep_mot <- acc_sep[acc_sep$group == "motivated",]
 acc_sep_cont <- acc_sep[acc_sep$group == "control",]
 
+# make plots 
 # optimal
-plt_pos_optimal <- plt_pos(df_all, "optimal", "#CC6677", acc_sep_opt)
+plt_pos_optimal <- plt_pos(df_all, "optimal", "#CC6677", acc_sep_opt, TRUE)
 plt_pos_optimal$labels$y <- ""
 plt_pos_optimal$labels$x <- "Delta (Visual Degrees)"
 
 # motivated 
-plt_pos_motivated <- plt_pos(df_all, "motivated", "#DDCC77", acc_sep_mot)
+plt_pos_motivated <- plt_pos(df_all, "motivated", "#DDCC77", acc_sep_mot, TRUE)
 plt_pos_motivated$labels$y <- "Proportion of Fixations to the side"
 plt_pos_motivated$labels$x <- "" 
 
 # control 
-plt_pos_control <- plt_pos(df_all, "control", "#4477AA", acc_sep_cont)
+plt_pos_control <- plt_pos(df_all, "control", "#4477AA", acc_sep_cont, TRUE)
 plt_pos_control$labels$y <- ""
 plt_pos_control$labels$x <- ""
 

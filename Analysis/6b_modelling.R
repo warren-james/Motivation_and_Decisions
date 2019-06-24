@@ -29,10 +29,6 @@ get_VisDegs <- function(size,distance){
 
 #### load in data ####
 load("scratch/all_data")
-df_all <- df
-
-#tidy
-rm(df)
 
 # work out expected accuracy? 
 # motivated 
@@ -470,11 +466,11 @@ HPDI_seg_d
 
 #### Using averages: beta ####
 #### Beta: group*dist ####
-# model_data <- df_all%>% 
+# model_data <- df_all%>%
 #   group_by(participant, dist_type, group) %>%
 #   summarise(Accuracy = mean(correct)) %>%
 #   mutate(Accuracy = (Accuracy + 1e-5)*0.9999)
-# 
+
 # m_acc_group_dist_beta <- brm(Accuracy ~ (dist_type + group)^2,
 #                              data = model_data,
 #                              family = "beta",
