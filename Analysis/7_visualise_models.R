@@ -226,16 +226,25 @@ plt_shaded_mu_beta <- function(data_mu, data_hpdi, data_posterior){
 }
 
 # plt difference for means
-plt_diff_beta <- function(mu){
-  plt_diff <- tibble(control = mu[,1],
+plt_diff_beta <- function(mu, m_matrix){
+  # setup data
+  temp_data <- tibble(control = mu[,1],
                      motivated = mu[,2],
                      optimal = mu[,3]) %>%
     mutate("Motivated - Control" = motivated - control,
            "Optimal - Control" = optimal - control,
            "Optimal - Motivated" = optimal - motivated) %>%
-    select(-control,
-           -motivated,
-           -optimal) %>%
+    select(-control, -motivated, -optimal)
+  
+  # get mean diff 
+  mean_diff <- temp_data %>% 
+    gather("Comparison", 
+           "Difference") %>%
+    group_by(Comparison) %>% 
+    summarise(mean_diff = mean(Difference)) 
+  
+  # make plot
+  plt_diff <- temp_data %>%
     gather(key = "Comparison",
            value = "Difference") %>%
     ggplot(aes(Difference,
@@ -249,8 +258,17 @@ plt_diff_beta <- function(mu){
     theme_minimal() +
     theme(legend.position = "bottom")
   
-  # return plt
-  return(plt_diff)
+  # get HPDI of difference 
+  hpdi_diff <- temp_data 
+  col_names <- as.tibble(colnames(hpdi_diff))
+  hpdi_diff <- as.tibble(t(purrr::map_df(hpdi_diff, hdi))) %>% 
+    cbind(col_names) %>% 
+    `colnames<-`(c("lower", "upper", "Comparison")) %>%
+    merge(mean_diff)
+  
+  # return this
+  my_list <- list(plt_diff, hpdi_diff)
+  return(my_list)
 }
 
 #### NB: need to sort this to be a distribution ####
@@ -311,8 +329,10 @@ plt_mu
 
 # plot with hpdi lines drawn
 max_height <- plt_posterior[["data"]] %>% 
-  group_by(group) %>% 
-  summarise(height = max(p)/2) %>% 
+  mutate(height = max(p)/5) %>%
+  group_by(group) %>%
+  summarise(height = unique(height)) %>%
+  mutate(height = ifelse(group == "motivated", height + 0.5, height)) %>%
   merge(hpdi_mu)
 
 # add in line for hpdi 
@@ -321,7 +341,13 @@ plt_posterior +
                aes(x = lower, y = height,
                    xend = upper, yend = height),
                size = 2,
-               lineend = "round")
+               lineend = "round") + 
+  theme(legend.title = element_blank(),
+        legend.spacing.x = unit(0.5, units = "cm"))
+
+ggsave("../Figures/Model_stan_rawacc_hpdi.png",
+       height = 3.5,
+       width = 5.6)
 
 # extract density information for this? 
 plt_shaded_mu <- plt_shaded_mu_beta(plt_mu[["data"]], hpdi_mu, plt_posterior[["data"]])
@@ -329,14 +355,31 @@ plt_shaded_mu
 
 
 # looking at differences 
-plt_diff <- plt_diff_beta(mu)
-plt_diff
+plt_diff <- plt_diff_beta(mu, X)
+height <- plt_diff[[1]][["data"]] %>% 
+  group_by(Comparison) %>% 
+  summarise(height = mean(Difference)*15) %>% 
+  merge(plt_diff[[2]])
+
+plt_diff[[1]] + 
+  geom_segment(data = height,
+               aes(x = lower, y = height,
+                   xend = upper, yend = height),
+               size = 2, 
+               lineend = "round")
+
+# get hpdi 
+hpdi_diff <- plt_diff[[2]]
+hpdi_diff 
 
 # side by side for paper 
-plt_save <- gridExtra::grid.arrange(plt_posterior, plt_diff, ncol = 2)
+plt_save <- gridExtra::grid.arrange(plt_posterior, plt_diff[[1]], ncol = 2)
 ggsave(plt_save, file = "../Figures/Model_stan_rawacc_compare.png",
        height = 5,
        width = 13)
+
+# get 95% HPDI for difference between the groups 
+
 
 #### m2: pred_acc ~ group ####
 load("modelling/model_data/beta_2")
@@ -355,8 +398,6 @@ ggsave("../Figures/Model_stan_expacc.png",
        height = 3.5,
        width = 5.6)
 
-
-
 # get predictions for mu
 mu_list <- plt_mu_beta(samples, X, model_data)
 mu <- mu_list[[1]]
@@ -367,8 +408,10 @@ plt_mu
 
 # plot with hpdi lines drawn
 max_height <- plt_posterior[["data"]] %>% 
+  mutate(height = max(p)/5) %>% 
   group_by(group) %>% 
-  summarise(height = max(p)/2) %>% 
+  summarise(height = unique(height)) %>% 
+  mutate(height = ifelse(group == "control", height - .5, height)) %>%
   merge(hpdi_mu)
 
 # add in line for hpdi 
@@ -377,7 +420,14 @@ plt_posterior +
                aes(x = lower, y = height,
                    xend = upper, yend = height),
                size = 2,
-               lineend = "round")
+               lineend = "round") + 
+  theme(legend.title = element_blank(),
+        legend.spacing.x = unit(0.5, units = "cm"))
+
+
+ggsave("../Figures/Model_stan_expacc_hpdi.png",
+       height = 3.5,
+       width = 5.6)
 
 # extract density information for this? 
 plt_shaded_mu <- plt_shaded_mu_beta(plt_mu[["data"]], hpdi_mu, plt_posterior[["data"]])
@@ -385,8 +435,22 @@ plt_shaded_mu
 
 
 # looking at differences 
-plt_diff <- plt_diff_beta(mu)
-plt_diff
+plt_diff <- plt_diff_beta(mu, X)
+height <- plt_diff[[1]][["data"]] %>% 
+  group_by(Comparison) %>% 
+  summarise(height = mean(Difference)*15) %>% 
+  merge(plt_diff[[2]])
+
+plt_diff[[1]] + 
+  geom_segment(data = height,
+               aes(x = lower, y = height,
+                   xend = upper, yend = height),
+               size = 2, 
+               lineend = "round")
+
+# get hpdi 
+hpdi_diff <- plt_diff[[2]]
+hpdi_diff 
 
 # side by side for paper 
 plt_save <- gridExtra::grid.arrange(plt_posterior, plt_diff, ncol = 2)

@@ -403,7 +403,7 @@ df_all %>%
   ggplot(aes(separation, Accuracy, colour = acc_type)) +
   geom_point() + 
   see::scale_color_flat() +
-  see::theme_lucid() +
+  see::theme_modern() +
   facet_wrap(~group)
 
 #### Box plots of accuracy ####
@@ -443,3 +443,26 @@ plt <- gridExtra::grid.arrange(plt_boxplt_acc,
 ggsave(file = "../Figures/Part_2_acc_boxplots.png", plt,
        height = 3,
        width = 4)
+
+#### Scatter plot overall accuracy ####
+plt_scatter <- df_all %>% 
+  group_by(participant, group) %>% 
+  summarise(RawAccuacy = mean(correct),
+            ExpectedAccuracy = mean(accuracy)) %>% 
+  ggplot(aes(RawAccuacy, ExpectedAccuracy,
+             colour = group)) + 
+  geom_point() + 
+  geom_abline(slope = 1, intercept = 0,
+              linetype = "dashed") +
+  theme_minimal() + 
+  theme(legend.position = "none") + 
+  ggthemes::scale_colour_ptol() + 
+  facet_wrap(~group)
+plt_scatter$labels$x <- "Rate of Success"
+plt_scatter$labels$y <- "Expected Rate of Success"
+plt_scatter
+
+# save 
+ggsave(file = "../Figures/exp_raw_scatter.png", 
+       height = 3,
+       width = 5)
