@@ -405,3 +405,41 @@ df_all %>%
   see::scale_color_flat() +
   see::theme_lucid() +
   facet_wrap(~group)
+
+#### Box plots of accuracy ####
+plt_boxplt_acc <- df_all %>% 
+  group_by(participant, group) %>% 
+  summarise(Accuracy = mean(correct)) %>% 
+  ggplot(aes(group, Accuracy,
+             fill = group)) + 
+  geom_boxplot() + 
+  theme_minimal() + 
+  theme(legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.text.x = element_text(angle = 45, hjust = 1)) + 
+  ggthemes::scale_fill_ptol() + 
+  scale_y_continuous(limits = c(0.5, 1))
+
+plt_boxplt_exp <- df_all %>% 
+  group_by(participant, group) %>% 
+  summarise(Accuracy = mean(accuracy)) %>% 
+  ggplot(aes(group, Accuracy,
+             fill = group)) + 
+  geom_boxplot() + 
+  theme_minimal() + 
+  theme(legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.text.x = element_text(angle = 45, hjust = 1)) + 
+  ggthemes::scale_fill_ptol() + 
+  scale_y_continuous(limits = c(0.5, 1))
+plt_boxplt_exp$labels$y <- "Predicted Accuracy"
+
+# plot together
+plt <- gridExtra::grid.arrange(plt_boxplt_acc,
+                               plt_boxplt_exp,
+                               nrow = 1)
+
+# save 
+ggsave(file = "../Figures/Part_2_acc_boxplots.png", plt,
+       height = 3,
+       width = 4)
