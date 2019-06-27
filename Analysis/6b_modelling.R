@@ -28,73 +28,7 @@ get_VisDegs <- function(size,distance){
 
 
 #### load in data ####
-load("scratch/all_data")
-
-# work out expected accuracy? 
-# motivated 
-load("scratch/acc_sep_peng")
-acc_sep_peng <- acc_sep %>%
-  mutate(participant = paste(participant,
-                             "motivated",
-                             sep = "_"))
-
-# control + optimal 
-load("scratch/acc_sep_contopt")
-load("scratch/df_groupID")
-acc_sep <- merge(acc_sep, df_groupID) %>%
-  mutate(participant = paste(participant, group, sep = "_")) %>%
-  select(-group) %>%
-  rbind(acc_sep_peng)
-
-# tidy 
-rm(acc_sep_peng)
-
-# bind this to df 
-acc_sep_1 <- acc_sep %>%
-  mutate(separation_1 = separation,
-         accuracy_1 = accuracy) %>%
-  select(-separation, -accuracy)
-acc_sep_2 <- acc_sep %>%
-  mutate(separation_2 = separation,
-         accuracy_2 = accuracy) %>%
-  select(-separation, -accuracy)
-
-df_all <- df_all %>%
-  mutate(separation_1 = separation*centre,
-         separation_2 = (separation*2)-separation_1)
-
-# merge this 
-df_all<- merge(df_all, acc_sep_1)
-df_all<- merge(df_all, acc_sep_2) %>%
-  mutate(accuracy = (accuracy_1 + accuracy_2)/2) %>%
-  select(-separation_1, -separation_2,
-         -accuracy_1, -accuracy_2)
-
-# tidy 
-rm(acc_sep_1, acc_sep_2)
-
-
-#### remove participant that didn't complete 4 blocks ####
-df_all <- df_all %>%
-  group_by(participant) %>%
-  filter(max(block) == 4) %>% 
-  ungroup()
-
-# plot something to check 
-df_all%>% 
-  group_by(participant, group) %>%
-  summarise(predicted = mean(accuracy),
-            actual = mean(correct)) %>%
-  gather(predicted:actual,
-         key = "type",
-         value = "accuracy") %>%
-  ggplot(aes(accuracy, colour = group, fill = group)) + 
-  geom_density(alpha = 0.3) + 
-  theme_minimal() +
-  facet_wrap(~type) 
-
-# save this 
-save(df_all, file = "scratch/df_all")
+load("scratch/model_data")
 
 
 #### STAN: Beta ####
@@ -143,7 +77,7 @@ model_data <- df_all %>%
 m_matrix <- model.matrix(pred_accuracy ~ group, data = model_data)
 
 stan_df <- list(
-  N = nrow(model_data),
+  N = nrow(model_data),l
   K = ncol(m_matrix),
   y = model_data$pred_accuracy,
   X = m_matrix
