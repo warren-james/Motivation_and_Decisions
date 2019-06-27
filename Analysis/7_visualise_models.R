@@ -290,7 +290,7 @@ samples <- rstan::extract(m_stan_group)
 # plt posterior
 plt_posterior <- plt_post_beta(model_data, x_vals, m_stan_group, X)
 plt_posterior <- plt_posterior + 
-  scale_x_continuous(limits = c(0.5, 0.9)) + 
+  scale_x_continuous(limits = c(0.5, 1)) + 
   scale_y_continuous(breaks = seq(0,15,5))
 plt_posterior
 
@@ -308,6 +308,20 @@ mu_df <- mu_list[[2]]
 hpdi_mu <- mu_list[[3]]
 plt_mu <- mu_list[[4]]
 plt_mu
+
+# plot with hpdi lines drawn
+max_height <- plt_posterior[["data"]] %>% 
+  group_by(group) %>% 
+  summarise(height = max(p)/2) %>% 
+  merge(hpdi_mu)
+
+# add in line for hpdi 
+plt_posterior + 
+  geom_segment(data = max_height, 
+               aes(x = lower, y = height,
+                   xend = upper, yend = height),
+               size = 2,
+               lineend = "round")
 
 # extract density information for this? 
 plt_shaded_mu <- plt_shaded_mu_beta(plt_mu[["data"]], hpdi_mu, plt_posterior[["data"]])
@@ -332,7 +346,7 @@ samples <- rstan::extract(m_stan_group_exp)
 # plt posterior
 plt_posterior <- plt_post_beta(model_data, x_vals, m_stan_group_exp, X)
 plt_posterior <- plt_posterior + 
-  scale_x_continuous(limits = c(0.5, 0.9)) + 
+  scale_x_continuous(limits = c(0.5, 1)) + 
   scale_y_continuous(breaks = seq(0,15,5))
 plt_posterior
 
@@ -350,6 +364,20 @@ mu_df <- mu_list[[2]]
 hpdi_mu <- mu_list[[3]]
 plt_mu <- mu_list[[4]]
 plt_mu
+
+# plot with hpdi lines drawn
+max_height <- plt_posterior[["data"]] %>% 
+  group_by(group) %>% 
+  summarise(height = max(p)/2) %>% 
+  merge(hpdi_mu)
+
+# add in line for hpdi 
+plt_posterior + 
+  geom_segment(data = max_height, 
+               aes(x = lower, y = height,
+                   xend = upper, yend = height),
+               size = 2,
+               lineend = "round")
 
 # extract density information for this? 
 plt_shaded_mu <- plt_shaded_mu_beta(plt_mu[["data"]], hpdi_mu, plt_posterior[["data"]])
