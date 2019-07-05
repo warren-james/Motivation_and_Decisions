@@ -104,6 +104,8 @@ plt_post_beta <- function(model_df, values, model, m_matrix){
     # see::theme_modern() +
     # see::scale_color_flat() +
     # see::scale_fill_flat() +
+    scale_x_continuous(limits = c(0.5, 1),
+                       labels = scales::percent) + 
     theme(legend.position = "bottom")
   if(length(list_names)>1){
     plt_posterior <- plt_posterior + facet_wrap(~acc_type)
@@ -167,7 +169,9 @@ plt_mu_beta <- function(samples, m_matrix, model_df){
     theme_minimal() + 
     theme(legend.position = "bottom") + 
     ggthemes::scale_color_ptol() +
-    ggthemes::scale_fill_ptol()
+    ggthemes::scale_fill_ptol() + 
+    scale_x_continuous(limits = c(0.5, 1),
+                       labels = scales::percent)
   if(length(col_names) > 1){
     plt_mu <- plt_mu + facet_wrap(~mu_df[[col_names[[2]]]])
   }
@@ -215,7 +219,8 @@ plt_shaded_mu_beta <- function(data_mu, data_hpdi, data_posterior){
     theme(legend.position = "bottom") + 
     ggthemes::scale_color_ptol() +
     ggthemes::scale_fill_ptol() + 
-    scale_x_continuous(limits = c(0.5, 0.9))
+    scale_x_continuous(limits = c(0.5, 1),
+                       labels = scales::percent)
   plt_shaded_mu$labels$colour <- "Group"
   plt_shaded_mu$labels$fill <- "Group"  
   plt_shaded_mu$labels$x <- "Predicted Accuracy"
@@ -256,7 +261,8 @@ plt_diff_beta <- function(mu, m_matrix){
     ggthemes::scale_color_ptol() +
     ggthemes::scale_fill_ptol() +
     theme_minimal() +
-    theme(legend.position = "bottom")
+    theme(legend.position = "bottom") + 
+    scale_x_continuous(labels = scales::percent)
   
   # get HPDI of difference 
   hpdi_diff <- temp_data 
@@ -308,7 +314,6 @@ samples <- rstan::extract(m_stan_group)
 # plt posterior
 plt_posterior <- plt_post_beta(model_data, x_vals, m_stan_group, X)
 plt_posterior <- plt_posterior + 
-  scale_x_continuous(limits = c(0.5, 1)) + 
   scale_y_continuous(breaks = seq(0,15,5))
 plt_posterior
 
@@ -389,7 +394,6 @@ samples <- rstan::extract(m_stan_group_exp)
 # plt posterior
 plt_posterior <- plt_post_beta(model_data, x_vals, m_stan_group_exp, X)
 plt_posterior <- plt_posterior + 
-  scale_x_continuous(limits = c(0.5, 1)) + 
   scale_y_continuous(breaks = seq(0,15,5))
 plt_posterior
 

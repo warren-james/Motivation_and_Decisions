@@ -8,7 +8,7 @@
 library(tidyverse)
 
 #### constants ####
-Screen_dist <- 60
+Screen_dist <- 53 
 x_res <- 1920
 x_width <- 54
 ppcm <- x_res/x_width
@@ -299,16 +299,19 @@ acc_sep_cont <- acc_sep[acc_sep$group == "control",]
 # make plots 
 # optimal
 plt_pos_optimal <- plt_pos(df_all, "optimal", "#CC6677", acc_sep_opt, TRUE)
+plt_pos_optimal <- plt_pos_optimal + labs(subtitle = "Optimal")
 plt_pos_optimal$labels$y <- ""
 plt_pos_optimal$labels$x <- "Delta (Visual Degrees)"
 
 # motivated 
 plt_pos_motivated <- plt_pos(df_all, "motivated", "#DDCC77", acc_sep_mot, TRUE)
+plt_pos_motivated <- plt_pos_motivated + labs(subtitle = "Motivated")
 plt_pos_motivated$labels$y <- "Proportion of Fixations to the side"
 plt_pos_motivated$labels$x <- "" 
 
 # control 
 plt_pos_control <- plt_pos(df_all, "control", "#4477AA", acc_sep_cont, TRUE)
+plt_pos_control <- plt_pos_control + labs(subtitle = "Control")
 plt_pos_control$labels$y <- ""
 plt_pos_control$labels$x <- ""
 
@@ -316,12 +319,12 @@ plt_pos_control$labels$x <- ""
 plt <- gridExtra::grid.arrange(plt_pos_control,
                                plt_pos_motivated,
                                plt_pos_optimal,
-                               heights = c(2.2,3,2.2))
+                               heights = c(1,1.36,1))
 
 
 ggsave(file = "../Figures/Part_2_all_groups.png", plt,
-       height = 10,
-       width = 10)
+       height = 6,
+       width = 8)
 
 #### Make exp vs act plots ####
 load("scratch/all_data")
@@ -449,14 +452,19 @@ plt_scatter <- df_all %>%
   group_by(participant, group) %>% 
   summarise(RawAccuacy = mean(correct),
             ExpectedAccuracy = mean(accuracy)) %>% 
+  # mutate(RawAccuacy = RawAccuacy * 100,
+  #        ExpectedAccuracy = ExpectedAccuracy * 100) %>%
   ggplot(aes(RawAccuacy, ExpectedAccuracy,
              colour = group)) + 
   geom_point() + 
   geom_abline(slope = 1, intercept = 0,
               linetype = "dashed") +
   theme_minimal() + 
+  coord_fixed() + 
   theme(legend.position = "none") + 
   ggthemes::scale_colour_ptol() + 
+  scale_y_continuous(labels = scales::percent) + 
+  scale_x_continuous(labels = scales::percent) +
   facet_wrap(~group)
 plt_scatter$labels$x <- "Rate of Success"
 plt_scatter$labels$y <- "Expected Rate of Success"
