@@ -461,10 +461,14 @@ plt_scatter <- df_all %>%
               linetype = "dashed") +
   theme_minimal() + 
   coord_fixed() + 
-  theme(legend.position = "none") + 
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 0, hjust = 0, size = 10)) + 
   ggthemes::scale_colour_ptol() + 
-  scale_y_continuous(labels = scales::percent) + 
-  scale_x_continuous(labels = scales::percent) +
+  scale_y_continuous(limits = c(.5, 1),
+                     labels = scales::percent_format(accuracy = 1)) + 
+  scale_x_continuous(limits = c(.5, 1),
+                     breaks = c(.5, .7, .9),
+                     labels = scales::percent_format(accuracy = 1)) +
   facet_wrap(~group)
 plt_scatter$labels$x <- "Rate of Success"
 plt_scatter$labels$y <- "Expected Rate of Success"

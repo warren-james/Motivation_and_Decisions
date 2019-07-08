@@ -105,7 +105,7 @@ plt_post_beta <- function(model_df, values, model, m_matrix){
     # see::scale_color_flat() +
     # see::scale_fill_flat() +
     scale_x_continuous(limits = c(0.5, 1),
-                       labels = scales::percent) + 
+                       labels = scales::percent_format(accuracy = 1)) + 
     theme(legend.position = "bottom")
   if(length(list_names)>1){
     plt_posterior <- plt_posterior + facet_wrap(~acc_type)
@@ -171,7 +171,7 @@ plt_mu_beta <- function(samples, m_matrix, model_df){
     ggthemes::scale_color_ptol() +
     ggthemes::scale_fill_ptol() + 
     scale_x_continuous(limits = c(0.5, 1),
-                       labels = scales::percent)
+                       labels = scales::percent_format(accuracy = 1))
   if(length(col_names) > 1){
     plt_mu <- plt_mu + facet_wrap(~mu_df[[col_names[[2]]]])
   }
@@ -220,7 +220,7 @@ plt_shaded_mu_beta <- function(data_mu, data_hpdi, data_posterior){
     ggthemes::scale_color_ptol() +
     ggthemes::scale_fill_ptol() + 
     scale_x_continuous(limits = c(0.5, 1),
-                       labels = scales::percent)
+                       labels = scales::percent_format(accuracy = 1))
   plt_shaded_mu$labels$colour <- "Group"
   plt_shaded_mu$labels$fill <- "Group"  
   plt_shaded_mu$labels$x <- "Predicted Accuracy"
@@ -262,7 +262,7 @@ plt_diff_beta <- function(mu, m_matrix){
     ggthemes::scale_fill_ptol() +
     theme_minimal() +
     theme(legend.position = "bottom") + 
-    scale_x_continuous(labels = scales::percent)
+    scale_x_continuous(labels = scales::percent_format(accuracy = 1))
   
   # get HPDI of difference 
   hpdi_diff <- temp_data 
