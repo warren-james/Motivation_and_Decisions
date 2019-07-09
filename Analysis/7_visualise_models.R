@@ -54,8 +54,6 @@ post_preds_beta <- function(model, x_vals, m_matrix){
 
 # plt posterior_beta
 plt_post_beta <- function(model_df, values, model, m_matrix){
-  # making it more flexible...
-  # should now be able to handle a bunch of variables
   list_unique <- c()
   list_names <- c()
   effects <- model_df %>%
@@ -91,19 +89,11 @@ plt_post_beta <- function(model_df, values, model, m_matrix){
     select(-remove) %>%
     mutate(x = rep(values, list_product),
            p = post_preds_beta(model, values, m_matrix)$p) %>%
-  
-  # plt_posterior <- tibble(
-  #   group = rep(unique(model_df$group), each = length(values)),
-  #   x = rep(values, 3),
-  #   p = post_preds_beta(model, values, m_matrix)$p) %>%
     ggplot(aes(x, p, colour = group, fill = group)) + 
     geom_area(position = "dodge", alpha = 0.3) +
     theme_minimal() +
     ggthemes::scale_color_ptol() +
     ggthemes::scale_fill_ptol() +
-    # see::theme_modern() +
-    # see::scale_color_flat() +
-    # see::scale_fill_flat() +
     scale_x_continuous(limits = c(0.5, 1),
                        labels = scales::percent_format(accuracy = 1)) + 
     theme(legend.position = "bottom")
@@ -129,7 +119,7 @@ plt_mu_beta <- function(samples, m_matrix, model_df){
     select(-1, -ncol(model_df))
   col_names <- colnames(col_names)
   
-  # should help?
+  # setup data frame of mu
   mu_df <- as.tibble(mu) %>% 
     `colnames<-`(colnames(m_matrix)) %>%
     gather(key = "temp",
@@ -138,7 +128,7 @@ plt_mu_beta <- function(samples, m_matrix, model_df){
              col_names,
              sep = ":")
   
-  # should help?  
+  # setup hpdi for mu
   hpdi_mu <- as.tibble(t(purrr::map_df(as.tibble(mu), hdi))) %>% 
     cbind(tibble(temp = colnames(m_matrix))) %>% 
     `colnames<-`(c("lower", "upper", "temp")) %>% 
@@ -277,22 +267,6 @@ plt_diff_beta <- function(mu, m_matrix){
   return(my_list)
 }
 
-#### NB: need to sort this to be a distribution ####
-# post for berno 
-post_berno <- function(model, x_vals, m_matrix){
-  post <- rstan::extract(model) 
-  
-  beta <- colMeans(post$beta)
-  
-  mu <- m_matrix %*% beta
-  
-  # sort this to be a distribution over x_vals
-  # ... not sure it will work with this one? 
-  p <- plogis(mu)
-  
-  
-  return(p)
-}
 
 #### PLOTTING MODELS ####
 #### BETA ####
@@ -463,6 +437,7 @@ ggsave(plt_save, file = "../Figures/Model_stan_expacc_compare.png",
        width = 13)
 
 #### m3: Acc ~ (group + acc_type)^2 ####
+#### NB: work in progress... not sure if needed? ####
 load("modelling/model_outputs/m_stan_both")
 load("modelling/model_data/beta_3")
 
@@ -470,6 +445,7 @@ load("modelling/model_data/beta_3")
 X <- data.frame(group = rep(c("Control", "Motivated", "Optimal"), each = 2),
                 acc_type = rep(c("Raw", "Prediced"), 3),
                 acc = rep(1, 6))
+
 X <- as.matrix(model.matrix(acc ~ (group + acc_type)^2, data = X))
 colnames(X) <- c("Control:Raw",
                  "Control:Predicted",
@@ -477,7 +453,6 @@ colnames(X) <- c("Control:Raw",
                  "Motivated:Predicted",
                  "Optimal:Raw",
                  "Optimal:Predicted")
-# this should work... otherwise we can do it by hand... 
 
 # sequence to predict over 
 x_vals <- seq(0,1-0.001, 0.001)
@@ -503,123 +478,3 @@ plt_mu$labels$colour <- ""
 plt_mu$labels$fill <- ""
 plt_mu
 
-#### BERNOULLI ####
-# setup effects
-X <- tibble(intercept = c(1,1,1),
-            motivated = c(0,1,0),
-            optimal = c(0,0,1))
-X <- as.matrix(X)
-
-# sequence to estimate likelihood 
-x_vals <- seq(0,1-0.001,0.001)
-
-# try this...
-plt_posterior <- plt_post_beta(model_data, x_vals, m_stan_both, X)
-plt_posterior <- plt_posterior + 
-  scale_x_continuous(limits = c(0.5, 0.9)) + 
-  scale_y_continuous(breaks = seq(0,15,5))
-plt_posterior
-
-#### m1: correct ~ group ####
-load("modelling/model_data/berno_1")
-load("modelling/model_outputs/m_stan_berno_1")
-
-# get samples
-samples <- rstan::extract(m_stan_berno)
-
-# this is for mu
-posterior <- as.tibble(samples$beta) %>% 
-  `colnames<-`(c("beta_1", "beta_2", "beta_3")) %>%
-  mutate(control = logistic(beta_1), 
-         motivated = logistic(beta_1 + beta_2),
-         optimal = logistic(beta_1 + beta_3)) %>%
-  select(control, motivated, optimal) %>%
-  gather(key = "group",
-         value = "mu") %>% 
-  ggplot(aes(mu,
-             colour = group,
-             fill = group)) + 
-  geom_density(alpha = 0.3)
-posterior
-
-# try a simulation using this method?
-beta <- colMeans(samples$beta)
-# beta <- samples$beta
-
-plt_berno <- tibble(group = rep(c("control", "motivated", "optimal"), each = 1000))
-# plt_berno <- tibble(group = rep(c("control", "motivated", "optimal"), each = 1000*100))
-
-beta[2] <- beta[2] + beta[1]
-beta[3] <- beta[3] + beta[1]
-# beta[,2] <- beta[,2] + beta[,1]
-# beta[,3] <- beta[,3] + beta[,1]
-
-p <- c()
-for(y in 1:3){
-  for(ii in 1:1000){
-    est = sum(rbernoulli(1000, logistic(beta[y])))/1000
-    p <- c(p, est)
-  }
-}
-
-
-# for(y in 1:3){
-#   for(x in 1:1000){
-#     for(ii in 1:100){
-#       est = sum(rbernoulli(1000, logistic(beta[x,y])))/1000
-#       p <- c(p, est)
-#     }
-#   }
-# }
-plt_berno <- cbind(plt_berno, p)
-plt_berno <- plt_berno %>% 
-  ggplot(aes(p,
-             colour = group,
-             fill = group)) + 
-  geom_density(alpha = 0.3) + 
-  ggthemes::scale_color_ptol() + 
-  ggthemes::scale_fill_ptol() + 
-  theme_minimal() + 
-  theme(legend.position = "bottom")
-plt_berno
-
-#### m2: correct ~ (group + dist_type)^2 ####
-# setup effects 
-X <- tibble(control = rep(c(1,1,1),2),
-            motivated = rep(c(0,1,0),2),
-            optimal = rep(c(0,0,1),2),
-            control_f = rep(c(0,1), each = 3),
-            moti_f = ifelse(motivated == 1 & control_f == 1, 1, 0),
-            opt_f = ifelse(optimal == 1 & control_f == 1, 1, 0))
-
-X <- as.matrix(X)
-
-# load in models 
-load("modelling/model_data/berno_2")
-load("modelling/model_outputs/m_stan_berno_2")
-
-# get samples
-samples <- rstan::extract(m_stan_berno_dt)
-
-post_berno(m_stan_berno_dt, 1, X)
-
-beta <- colMeans(samples$beta)
-
-plt_berno <- tibble(group = rep(c("control", "motivated", "optimal"), each = 2000),
-                    dist_t = rep(c("close", "far"), each = 1000, 3))
-
-for(ii in 2:length(beta)){
-  beta[ii] <- beta[ii] + beta[1]
-}
-
-##### sort this ####
-# p <- c()
-# for(ii in 1:3){
-#   for
-#   for(i in 1:1000){
-#     est = sum(rbernoulli(1000, logistic(beta[ii])))/1000
-#     p <- c(p, est)
-#   }
-# }
-
-plt_berno <- cbind(plt_berno, p)

@@ -109,7 +109,7 @@ plt_pos <- function(data, condition, palette, switch_frame, ordered){
     scale_colour_manual(values = palette) + 
     scale_y_continuous(breaks = c(0,0.5,1))
   if(ordered == TRUE){
-    plt <- plt + facet_wrap(~ order_cent + participant, ncol = 6) 
+    plt <- plt + facet_wrap(~order_cent + participant, ncol = 6) 
   } else { 
     plt <- plt + facet_wrap(~participant, ncol = 6)
   }
@@ -207,19 +207,6 @@ df_groupID <- rbind(df_control, df_optimal) %>%
 save(df_groupID, file = "scratch/df_groupID")
 
 #### PLOTS ####
-#### PLOTS: num_fish ####
-# compare max number of fish for each group?
-# this might be a bit dumb... and really crude... but ah well
-# might need to work on the scripts for working out the score etc
-# as it seems to overestimate somewhat 
-plt_fish <- df_all %>%
-  group_by(participant, group) %>%
-  summarise(Score = max(num_fish)) %>% 
-  ggplot(aes(Score,
-             fill = group)) +
-  geom_density(alpha = 0.5)
-plt_fish
-
 #### PLOTS: overall acc ####
 # acc plot 
 plt_acc <- df_all %>%
@@ -284,8 +271,10 @@ for(p in unique(switch_line$participant)){
   }
 }
 
-# sort out ordering 
-# this doesn't seem to work...
+# tidy
+rm(p, ii, group, opt_pos, min_d, max_d, switch)
+
+# reorder by centre value 
 df_order <- df_all %>% 
   group_by(participant) %>% 
   summarise(order_cent = 1 - mean(centre)) 
@@ -329,7 +318,7 @@ ggsave(file = "../Figures/Part_2_all_groups.png", plt,
 #### Make exp vs act plots ####
 load("scratch/all_data")
 
-# work out expected accuracy? 
+# work out expected accuracy
 # motivated 
 load("scratch/acc_sep_peng")
 acc_sep_peng <- acc_sep %>%

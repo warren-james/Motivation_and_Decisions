@@ -1,5 +1,5 @@
 #### Sort out data to compare to ####
-# This is to read in the data from the transfer paper 
+# This is to read in the data from https:// osf.io/t6c5q/
 # then save it for other scripts to use 
 
 #### Library ####
@@ -121,9 +121,6 @@ rm(i)
 # 1 = centre, 2 & 3 = sides
 switch_df_control$centre <- ifelse(switch_df_control$fixated_box == 1, 1, 0)
 
-#### sort out participant order ####
-# switch_df_control$participant <- as.numeric(as.factor(switch_df_control$participant))
-
 #### save the file (everything) ####
 save(switch_df_control, file = "scratch/switch_df_control")
 
@@ -192,8 +189,6 @@ acc_sep <- tibble(
 
 
 # loop through participants for accuracy over all separations
-# very slow loop... must be a quicker way to do this?
-# the for(i in 1:648) causes it to slow... Can do this another way?
 for (p in unique(df$participant))
 {
   # general linear model
