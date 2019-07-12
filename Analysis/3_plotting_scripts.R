@@ -1,9 +1,10 @@
 #### Plotting Script #### 
-# Level 4 Thesis by Ellen
 # 2017/18
 # Written by Warren James
 # Script used to make plots of proportion of fixations 
 # made to the centre or side box(es)
+# only deals with the motivated group 
+
 
 #### libraries needed ####
 library(tidyverse)
@@ -83,8 +84,6 @@ acc_sep <- tibble(
 
 
 # loop through participants for accuracy over all separations
-# very slow loop... must be a quicker way to do this?
-# the for(i in 1:648) causes it to slow... Can do this another way?
 for (p in unique(df$participant))
 {
  # general linear model
@@ -136,10 +135,6 @@ plt <- agdat %>%
 plt$labels$x <- "Proportion Correct"
 plt$labels$y <- "Delta (pixels)"
 plt
-# ggsave("scratch/plots/Part_1_Plots.pdf", height = 10, width = 10)
-# or as png?
-# ggsave("../Figures/Part_1_Plots.png", height = 10, width = 10)
-
 
 # example plot
 participant <- "19"
@@ -195,7 +190,7 @@ switching_points <- switch_df %>%
   group_by(participant) %>%
   summarise(switch_point = unique(switch_point))
 
-# round this??
+# round this
 switching_points$switch_point <- as.numeric(switching_points$switch_point)
 switching_points$switch_point <- round(switching_points$switch_point)
 
@@ -220,25 +215,22 @@ prop_plt
 # to save a copy
 # ggsave("../Figures/proportions_plot.png", width = 10, height = 10)
 
-# not sure what other plots need to be made just now, but this seems to be it
-# No real difference, participants still seem as idiosyncratic as ever...
-
-# plot for Amelia 
+# same again, but with dots
 # So this needs to be just dots to show the proportion of fixations to the side boxes 
 side_fixations <- prop_dat[prop_dat$box == "side",]
 side_fixations <- merge(side_fixations, switching_points)
 
-AH_plt <- ggplot(side_fixations, aes(get_VisDegs(separation/ppcm, Screen_dist),
+dot_plt <- ggplot(side_fixations, aes(get_VisDegs(separation/ppcm, Screen_dist),
                                      prop_fixated))
-AH_plt <- AH_plt + geom_point() 
-AH_plt <- AH_plt + geom_vline(aes(xintercept = get_VisDegs(switch_point/ppcm, Screen_dist)),
+dot_plt <- dot_plt + geom_point() 
+dot_plt <- dot_plt + geom_vline(aes(xintercept = get_VisDegs(switch_point/ppcm, Screen_dist)),
                               linetype = "dashed")
-AH_plt <- AH_plt + scale_y_continuous(name="Proportion of fixations to one of the side boxes")
-AH_plt <- AH_plt + scale_x_continuous(name="separation (pixels)")#, limits=c(0,450), breaks=c(0,150,300,450))
-AH_plt <- AH_plt + theme_minimal() 
-AH_plt <- AH_plt + theme(strip.text.x = element_blank())
-AH_plt <- AH_plt + facet_wrap(~participant)
-AH_plt
+dot_plt <- dot_plt + scale_y_continuous(name="Proportion of fixations to one of the side boxes")
+dot_plt <- dot_plt + scale_x_continuous(name="separation (pixels)")
+dot_plt <- dot_plt + theme_minimal() 
+dot_plt <- dot_plt + theme(strip.text.x = element_blank())
+dot_plt <- dot_plt + facet_wrap(~participant)
+dot_plt
 # save
 # ggsave("../Figures/Part_2.png", height = 10, width = 10)
 

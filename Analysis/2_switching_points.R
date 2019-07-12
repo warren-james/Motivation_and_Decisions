@@ -51,9 +51,6 @@ rm(df)
 
 #### Create column for whether they made the optimal choice or not ####
 # Make side vs centre first 
-# Think this is right, check the script though
-# originally made as 1, 2, 3 = left, centre, right... doesn't seem to be the case going
-# by my own testing of this experiment... looks like it's as follows instead
 # 1 = centre, 2 = left, 3 = right
 switch_df$centre <- ifelse(switch_df$fixated_box == 1, 1, 0)
 
@@ -63,18 +60,11 @@ save(switch_df, file = "scratch/switch_data")
 #### Create version with Na's removed ####
 switch_df <- switch_df[complete.cases(switch_df),]
 
-#### Track score? ####
+#### Track score ####
 # make score its own data fram then bind it later...
 score_frame <- tibble(score = numeric()) # too few obs
 
-# Within each block and participant there should be a count based on whether people
-# were accurate or not, so start count at 0,
-# if correct then add one, if incorrect, subtract one
-# if thresholds are reached then reset (6 upper, lower -4 I think?)
-# If a threshold is reached, score is reset to one 
-# so as if it is a new block, does this also when making a mistake
-# 1 is the "centre" of the bar... that explains it 
-
+# loop to add in score
 for(i in unique(switch_df$participant)){
   for(j in unique(switch_df$block)){
     score <- 0 
@@ -105,11 +95,6 @@ for(i in unique(switch_df$participant)){
 
 
 switch_df <- cbind(switch_df, score_frame)
-
-
-# Just to check that the score variable is coded properly
-temp <- group_by(switch_df, participant, block, num_fish)
-temp <- summarise(temp, max_count = max(score))
 
 # tidy 
 rm(i, j, k, score, score_frame)
