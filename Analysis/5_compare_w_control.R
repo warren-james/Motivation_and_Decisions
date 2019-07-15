@@ -439,11 +439,13 @@ ggsave(file = "../Figures/Part_2_acc_boxplots.png", plt,
 #### Scatter plot overall accuracy ####
 plt_scatter <- df_all %>% 
   group_by(participant, group) %>% 
-  summarise(RawAccuacy = mean(correct),
+  summarise(RawAccuracy = mean(correct),
             ExpectedAccuracy = mean(accuracy)) %>% 
+  mutate(group = ifelse(group == "optimal", "Optimal", 
+                        ifelse(group == "motivated", "Motivated", "Control"))) %>%
   # mutate(RawAccuacy = RawAccuacy * 100,
   #        ExpectedAccuracy = ExpectedAccuracy * 100) %>%
-  ggplot(aes(RawAccuacy, ExpectedAccuracy,
+  ggplot(aes(ExpectedAccuracy, RawAccuracy,
              colour = group)) + 
   geom_point() + 
   geom_abline(slope = 1, intercept = 0,
@@ -459,8 +461,8 @@ plt_scatter <- df_all %>%
                      breaks = c(.5, .7, .9),
                      labels = scales::percent_format(accuracy = 1)) +
   facet_wrap(~group)
-plt_scatter$labels$x <- "Rate of Success"
-plt_scatter$labels$y <- "Expected Rate of Success"
+plt_scatter$labels$x <- "Expected Rate of Success"
+plt_scatter$labels$y <- "Rate of Success"
 plt_scatter
 
 # save 

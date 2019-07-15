@@ -285,6 +285,11 @@ load("modelling/model_data/beta_1")
 load("modelling/model_outputs/m_stan_group_beta_1")
 samples <- rstan::extract(m_stan_group)
 
+# sort out group labels 
+model_data <- model_data %>% 
+  mutate(group = ifelse(group == "optimal", "Optimal",
+                        ifelse(group == "motivated", "Motivated", "Control")))
+
 # plt posterior
 plt_posterior <- plt_post_beta(model_data, x_vals, m_stan_group, X)
 plt_posterior <- plt_posterior + 
@@ -297,12 +302,13 @@ ggsave("../Figures/Model_stan_rawacc.png",
        width = 5.6)
 
 
-
 # get predictions for mu
 mu_list <- plt_mu_beta(samples, X, model_data)
 mu <- mu_list[[1]]
 mu_df <- mu_list[[2]]
-hpdi_mu <- mu_list[[3]]
+hpdi_mu <- mu_list[[3]] %>% 
+  mutate(group = ifelse(group == "optimal", "Optimal",
+                        ifelse(group == "motivated", "Motivated", "Control")))
 plt_mu <- mu_list[[4]]
 plt_mu
 
@@ -311,7 +317,7 @@ max_height <- plt_posterior[["data"]] %>%
   mutate(height = max(p)/5) %>%
   group_by(group) %>%
   summarise(height = unique(height)) %>%
-  mutate(height = ifelse(group == "motivated", height + 0.5, height)) %>%
+  mutate(height = ifelse(group == "Motivated", height + 0.5, height)) %>%
   merge(hpdi_mu)
 
 # add in line for hpdi 
@@ -365,6 +371,11 @@ load("modelling/model_data/beta_2")
 load("modelling/model_outputs/m_stan_group_beta_2")
 samples <- rstan::extract(m_stan_group_exp)
 
+# sort out group labels
+model_data <- model_data %>% 
+  mutate(group = ifelse(group == "optimal", "Optimal",
+                        ifelse(group == "motivated", "Motivated", "Control")))
+
 # plt posterior
 plt_posterior <- plt_post_beta(model_data, x_vals, m_stan_group_exp, X)
 plt_posterior <- plt_posterior + 
@@ -380,7 +391,9 @@ ggsave("../Figures/Model_stan_expacc.png",
 mu_list <- plt_mu_beta(samples, X, model_data)
 mu <- mu_list[[1]]
 mu_df <- mu_list[[2]]
-hpdi_mu <- mu_list[[3]]
+hpdi_mu <- mu_list[[3]] %>% 
+  mutate(group = ifelse(group == "optimal", "Optimal",
+                        ifelse(group == "motivated", "Motivated", "Control")))
 plt_mu <- mu_list[[4]]
 plt_mu
 
@@ -389,7 +402,7 @@ max_height <- plt_posterior[["data"]] %>%
   mutate(height = max(p)/5) %>% 
   group_by(group) %>% 
   summarise(height = unique(height)) %>% 
-  mutate(height = ifelse(group == "control", height - .5, height)) %>%
+  mutate(height = ifelse(group == "Control", height - .5, height)) %>%
   merge(hpdi_mu)
 
 # add in line for hpdi 
