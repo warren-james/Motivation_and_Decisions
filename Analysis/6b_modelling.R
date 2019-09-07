@@ -49,7 +49,7 @@ stan_df <- list(
 )
 
 m_stan_group <- stan(
-  file = "modelling/models/stan_model.stan",
+  file = "modelling/models/stan_model_np.stan",
   data = stan_df,
   chains = 1,
   warmup = 2000,
@@ -61,6 +61,18 @@ m_stan_group <- stan(
 save(model_data, file = "modelling/model_data/beta_1")
 save(m_stan_group, file = "modelling/model_outputs/m_stan_group_beta_1")
 
+# same again with new priors
+m_stan_group_pdata <- stan(
+  file = "modelling/models/stan_model_pfdata2.stan",
+  data = stan_df,
+  chains = 1,
+  warmup = 2000,
+  iter = 4000,
+  refresh = 100
+)
+
+# save above
+save(m_stan_group_pdata, file = "modelling/model_outputs/m_stan_group_beta_1_pdata")
 
 #### STAN: Predicted Accuracy ####
 # same as above but now on expected accuracy
@@ -79,7 +91,7 @@ stan_df <- list(
 )
 
 m_stan_group_exp <- stan(
-  file = "modelling/models/stan_model.stan",
+  file = "modelling/models/stan_model_np.stan",
   data = stan_df,
   chains = 1,
   warmup = 2000,
@@ -89,6 +101,30 @@ m_stan_group_exp <- stan(
 
 save(model_data, file = "modelling/model_data/beta_2")
 save(m_stan_group_exp, file = "modelling/model_outputs/m_stan_group_beta_2")
+
+# same again with priors (no effect)
+m_stan_group_exp_pdata <- stan(
+  file = "modelling/models/stan_model_pfdata.stan",
+  data = stan_df,
+  chains = 1,
+  warmup = 2000,
+  iter = 4000,
+  refresh = 100
+)
+
+save(m_stan_group_exp_pdata, file = "modelling/model_outputs/m_stan_group_beta_2_pdata")
+
+# same again with new (skewed) priors
+m_stan_group_exp_pdata <- stan(
+  file = "modelling/models/stan_model_pfdata2.stan",
+  data = stan_df,
+  chains = 1,
+  warmup = 2000,
+  iter = 4000,
+  refresh = 100
+)
+
+save(m_stan_group_exp_pdata, file = "modelling/model_outputs/m_stan_group_beta_2_pdata2")
 
 
 #### STAN: acc ~ group * acc_type ####
@@ -210,3 +246,70 @@ m_stan_group_dist_exp <- stan(
   iter = 2000,
   refresh = 100
 )
+
+#### STAN: Add in Delta ####
+# setup the data: scale separation 
+model_data_scaled <- df_all %>%
+  mutate(scaled_sep = separation/max(separation)) %>%
+  group_by(participant, scaled_sep, separation, group) %>% 
+  summarise(act_acc = (mean(correct)+ 1e-5)*0.9999,
+            exp_acc = mean(accuracy)) %>%
+  ungroup()
+
+#### STAN: Actual Acc ~ (distance + group)^2 ####
+m_matrix <- model.matrix(act_acc ~ (group + scaled_sep)^2, data = model_data_scaled)
+
+stan_df <- list(
+  N = nrow(model_data_scaled),
+  K = ncol(m_matrix),
+  y = model_data_scaled$act_acc,
+  X = m_matrix
+)
+
+m_stan_group_scaled_acc <- stan(
+  file = "modelling/models/stan_model.stan",
+  data = stan_df,
+  chains = 1,
+  warmup = 1000,
+  iter = 2000,
+  refresh = 100
+)
+
+# save data amd model 
+save(model_data_scaled, file = "modelling/model_data/model_data_scaled")
+save(m_stan_group_scaled_acc, file = "modelling/model_outputs/m_stan_group_scaled_acc")
+
+# same again with priors based on data 
+m_stan_group_scaled_acc <- stan(
+  file = "modelling/models/stan_model_pfdata.stan",
+  data = stan_df,
+  chains = 1,
+  warmup = 1000,
+  iter = 2000,
+  refresh = 100
+)
+
+# save data amd model 
+save(model_data_scaled, file = "modelling/model_data/model_data_scaled")
+save(m_stan_group_scaled_acc, file = "modelling/model_outputs/m_stan_group_scaled_acc")
+#### STAN: Exp acc ~ (distance + group)^2 ####
+m_matrix <- model.matrix(exp_acc ~ (group + scaled_sep)^2, data = model_data_scaled)
+
+stan_df <- list(
+  N = nrow(model_data_scaled),
+  K = ncol(m_matrix),
+  y = model_data_scaled$exp_acc,
+  X = m_matrix
+)
+
+m_stan_group_scaled_exp <- stan(
+  file = "modelling/models/stan_model.stan",
+  data = stan_df,
+  chains = 1,
+  warmup = 1000,
+  iter = 2000,
+  refresh = 100
+)
+
+# save model 
+save(m_stan_group_scaled_acc, file = "modelling/model_outputs/m_stan_group_scaled_exp")

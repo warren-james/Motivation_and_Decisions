@@ -57,7 +57,7 @@ model {
 
   // priors
 
-  beta ~ normal(0, 0.25);
+  beta ~ normal(0, 1);
 
 
   gamma ~ normal(2, 0.5);

@@ -74,6 +74,9 @@ df <- select(df,
 # remove NA trials 
 df <- df[complete.cases(df),]
 
+# save this 
+save(df, file = "scratch/Part1_peng")
+
 #### Calculate curve for accuracy across distances ####
 # data frame for accuracy accross separations
 acc_sep <- tibble(

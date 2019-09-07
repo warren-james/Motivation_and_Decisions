@@ -52,7 +52,8 @@ post_preds_beta <- function(model, x_vals, m_matrix){
 }
 
 
-# plt posterior_beta
+# plt posterior_beta 
+# NB only for discrete factors
 plt_post_beta <- function(model_df, values, model, m_matrix){
   list_unique <- c()
   list_names <- c()
@@ -63,15 +64,15 @@ plt_post_beta <- function(model_df, values, model, m_matrix){
     list_unique <- c(list_unique, length(unique(effects[[ii]])))
     list_names <- c(list_names, ii)
   }
-  # list_product 
+  # list_product
   list_product <- prod(list_unique)
   # sort out list for appropriate list building
   if(length(list_unique)>1){
-    list_unique <- abs(list_unique - sum(list_unique))  
+    list_unique <- abs(list_unique - sum(list_unique))
   } else {
     list_unique = 1
   }
-  
+
   plt_dat <- tibble(remove = rep(0, prod(list_unique)))
   count <- 0
   for(ii in list_names){
@@ -81,20 +82,27 @@ plt_post_beta <- function(model_df, values, model, m_matrix){
     } else {
       temp <- rep(rep(unique(effects[[ii]]), each = length(values)), list_unique[count])
     }
-    
+
     plt_dat <- cbind(plt_dat, temp)
   }
+  # plt_dat <- tibble(
+  #   group = rep(unique(model_df$group), each = length(values)),
+  #   x = rep(values, length(unique(model_df$group))),
+  #   p = post_preds_beta(model, values, m_matrix)$p
+  # )
   plt_posterior <- plt_dat %>%
     `colnames<-`(c("remove", unique(list_names))) %>%
     select(-remove) %>%
     mutate(x = rep(values, list_product),
            p = post_preds_beta(model, values, m_matrix)$p) %>%
+  # plt_posterior <- plt_dat %>%
     ggplot(aes(x, p, colour = group, fill = group)) + 
     geom_area(position = "dodge", alpha = 0.3) +
     theme_minimal() +
     ggthemes::scale_color_ptol() +
     ggthemes::scale_fill_ptol() +
-    scale_x_continuous(limits = c(0.5, 1),
+    scale_x_continuous(limits = c(0.4, 1),
+                       breaks = seq(.4, 1, .1),
                        labels = scales::percent_format(accuracy = 1)) + 
     theme(legend.position = "bottom")
   if(length(list_names)>1){
@@ -281,9 +289,12 @@ x_vals <- seq(0,1-0.001,0.001)
 
 
 #### m1: acc ~ group ####
+#### m1: First no priors ####
 load("modelling/model_data/beta_1")
 load("modelling/model_outputs/m_stan_group_beta_1")
-samples <- rstan::extract(m_stan_group)
+load("modelling/model_outputs/m_stan_group_beta_1_pdata")
+model <- m_stan_group
+samples <- rstan::extract(model)
 
 # sort out group labels 
 model_data <- model_data %>% 
@@ -291,7 +302,85 @@ model_data <- model_data %>%
                         ifelse(group == "motivated", "Motivated", "Control")))
 
 # plt posterior
-plt_posterior <- plt_post_beta(model_data, x_vals, m_stan_group, X)
+plt_posterior <- plt_post_beta(model_data, x_vals, model, X)
+plt_posterior <- plt_posterior + 
+  scale_y_continuous(breaks = seq(0,15,5))
+plt_posterior
+
+# save 
+ggsave("../Figures/Model_stan_rawacc_np.png",
+       height = 3.5,
+       width = 5.6)
+
+
+# get predictions for mu
+mu_list <- plt_mu_beta(samples, X, model_data)
+mu <- mu_list[[1]]
+mu_df <- mu_list[[2]]
+hpdi_mu <- mu_list[[3]] %>% 
+  mutate(group = ifelse(group == "optimal", "Optimal",
+                        ifelse(group == "motivated", "Motivated", "Control")))
+plt_mu <- mu_list[[4]]
+plt_mu
+
+# plot with hpdi lines drawn
+max_height <- plt_posterior[["data"]] %>% 
+  group_by(group) %>%
+  mutate(height = max(p)/5) %>%
+  summarise(height = unique(height)) %>%
+  merge(hpdi_mu) %>%
+  ungroup()
+
+# add in line for hpdi 
+plt_posterior + 
+  geom_segment(data = max_height, 
+               aes(x = lower, y = height,
+                   xend = upper, yend = height),
+               size = 2,
+               lineend = "round") + 
+  theme(legend.title = element_blank(),
+        legend.spacing.x = unit(0.5, units = "cm"))
+
+ggsave("../Figures/Model_stan_rawacc_hpdi_np.png",
+       height = 3.5,
+       width = 5.6)
+
+# extract density information for this? 
+plt_shaded_mu <- plt_shaded_mu_beta(plt_mu[["data"]], hpdi_mu, plt_posterior[["data"]])
+plt_shaded_mu
+
+
+# looking at differences 
+plt_diff <- plt_diff_beta(mu, X)
+height <- plt_diff[[1]][["data"]] %>% 
+  group_by(Comparison) %>% 
+  summarise(height = mean(Difference)*15) %>% 
+  merge(plt_diff[[2]])
+
+plt_diff[[1]] + 
+  geom_segment(data = height,
+               aes(x = lower, y = height,
+                   xend = upper, yend = height),
+               size = 2, 
+               lineend = "round")
+
+# get hpdi 
+hpdi_diff <- plt_diff[[2]]
+hpdi_diff 
+
+# side by side for paper 
+plt_save <- gridExtra::grid.arrange(plt_posterior, plt_diff[[1]], ncol = 2)
+ggsave(plt_save, file = "../Figures/Model_stan_rawacc_compare_np.png",
+       height = 5,
+       width = 13)
+
+#### m1: Now with priors ####
+load("modelling/model_outputs/m_stan_group_beta_1_pdata")
+model <- m_stan_group_pdata
+samples <- rstan::extract(model)
+
+# plt posterior
+plt_posterior <- plt_post_beta(model_data, x_vals, model, X)
 plt_posterior <- plt_posterior + 
   scale_y_continuous(breaks = seq(0,15,5))
 plt_posterior
@@ -314,11 +403,11 @@ plt_mu
 
 # plot with hpdi lines drawn
 max_height <- plt_posterior[["data"]] %>% 
-  mutate(height = max(p)/5) %>%
   group_by(group) %>%
+  mutate(height = max(p)/5) %>%
   summarise(height = unique(height)) %>%
-  mutate(height = ifelse(group == "Motivated", height + 0.5, height)) %>%
-  merge(hpdi_mu)
+  merge(hpdi_mu) %>%
+  ungroup()
 
 # add in line for hpdi 
 plt_posterior + 
@@ -350,7 +439,7 @@ plt_diff[[1]] +
   geom_segment(data = height,
                aes(x = lower, y = height,
                    xend = upper, yend = height),
-               size = 2, 
+               size = 1, 
                lineend = "round")
 
 # get hpdi 
@@ -363,13 +452,12 @@ ggsave(plt_save, file = "../Figures/Model_stan_rawacc_compare.png",
        height = 5,
        width = 13)
 
-# get 95% HPDI for difference between the groups 
-
-
 #### m2: pred_acc ~ group ####
+#### m2: no priors ####
 load("modelling/model_data/beta_2")
 load("modelling/model_outputs/m_stan_group_beta_2")
-samples <- rstan::extract(m_stan_group_exp)
+model <- m_stan_group_exp
+samples <- rstan::extract(model)
 
 # sort out group labels
 model_data <- model_data %>% 
@@ -377,13 +465,13 @@ model_data <- model_data %>%
                         ifelse(group == "motivated", "Motivated", "Control")))
 
 # plt posterior
-plt_posterior <- plt_post_beta(model_data, x_vals, m_stan_group_exp, X)
+plt_posterior <- plt_post_beta(model_data, x_vals, model, X)
 plt_posterior <- plt_posterior + 
   scale_y_continuous(breaks = seq(0,15,5))
 plt_posterior
 
 # save 
-ggsave("../Figures/Model_stan_expacc.png",
+ggsave("../Figures/Model_stan_expacc_np.png",
        height = 3.5,
        width = 5.6)
 
@@ -416,7 +504,7 @@ plt_posterior +
         legend.spacing.x = unit(0.5, units = "cm"))
 
 
-ggsave("../Figures/Model_stan_expacc_hpdi.png",
+ggsave("../Figures/Model_stan_expacc_hpdi_np.png",
        height = 3.5,
        width = 5.6)
 
@@ -445,9 +533,113 @@ hpdi_diff
 
 # side by side for paper 
 plt_save <- gridExtra::grid.arrange(plt_posterior, plt_diff, ncol = 2)
-ggsave(plt_save, file = "../Figures/Model_stan_expacc_compare.png",
+ggsave(plt_save, file = "../Figures/Model_stan_expacc_compare_np.png",
        height = 5,
        width = 13)
+
+#### m2: w/ priors ####
+load("modelling/model_outputs/m_stan_group_beta_2_pdata")
+model <- m_stan_group_exp_pdata
+samples <- rstan::extract(model)
+
+# plt posterior
+plt_posterior <- plt_post_beta(model_data, x_vals, model, X)
+plt_posterior <- plt_posterior + 
+  scale_y_continuous(breaks = seq(0,15,5))
+plt_posterior
+
+# save 
+ggsave("../Figures/Model_stan_expac_wp.png",
+       height = 3.5,
+       width = 5.6)
+
+# get predictions for mu
+mu_list <- plt_mu_beta(samples, X, model_data)
+mu <- mu_list[[1]]
+mu_df <- mu_list[[2]]
+hpdi_mu <- mu_list[[3]] %>% 
+  mutate(group = ifelse(group == "optimal", "Optimal",
+                        ifelse(group == "motivated", "Motivated", "Control")))
+plt_mu <- mu_list[[4]]
+plt_mu
+
+# plot with hpdi lines drawn
+max_height <- plt_posterior[["data"]] %>% 
+  group_by(group) %>% 
+  mutate(height = max(p)/5) %>% 
+  summarise(height = unique(height)) %>%
+  ungroup() %>%
+  merge(hpdi_mu)
+
+# add in line for hpdi 
+plt_posterior + 
+  geom_segment(data = max_height, 
+               aes(x = lower, y = height,
+                   xend = upper, yend = height),
+               size = 2,
+               lineend = "round") + 
+  theme(legend.title = element_blank(),
+        legend.spacing.x = unit(0.5, units = "cm"))
+
+
+ggsave("../Figures/Model_stan_expacc_hpdi_wp.png",
+       height = 3.5,
+       width = 5.6)
+
+# extract density information for this? 
+plt_shaded_mu <- plt_shaded_mu_beta(plt_mu[["data"]], hpdi_mu, plt_posterior[["data"]])
+plt_shaded_mu
+
+
+# looking at differences 
+plt_diff <- plt_diff_beta(mu, X)
+height <- plt_diff[[1]][["data"]] %>% 
+  group_by(Comparison) %>% 
+  summarise(height = mean(Difference)*15) %>% 
+  merge(plt_diff[[2]])
+
+plt_diff[[1]] + 
+  geom_segment(data = height,
+               aes(x = lower, y = height,
+                   xend = upper, yend = height),
+               size = 2, 
+               lineend = "round")
+
+# get hpdi 
+hpdi_diff <- plt_diff[[2]]
+hpdi_diff 
+
+# side by side for paper 
+plt_save <- gridExtra::grid.arrange(plt_posterior, plt_diff, ncol = 2)
+ggsave(plt_save, file = "../Figures/Model_stan_expacc_compare_np.png",
+       height = 5,
+       width = 13)
+
+
+#### m4: actual acc ~ (group + scaled_sep)^2 ####
+load("modelling/model_data/model_data_scaled")
+load("modelling/model_outputs/m_stan_group_scaled_acc")
+
+seps <- c(min(model_data_scaled$scaled_sep), mean(model_data_scaled$scaled_sep), max(model_data_scaled$scaled_sep))
+
+# setup effects 
+X <- tibble(control = rep(1, 9),
+            motivated = rep(c(0,1,0), 3),
+            optimal = rep(c(0,0,1), 3),
+            control_sep = rep(c(seps[1], seps[2],seps[3]), each = 3),
+            motivated_sep = ifelse(motivated == 1, control_sep, 0),
+            optimal_sep = ifelse(optimal == 1, control_sep, 0))
+X <- as.matrix(X)
+
+x_vals <- seq(0,1-0.001,0.001)
+
+# extract samples 
+samples <- rstan::extract(m_stan_group_scaled_acc)
+
+# plot something...
+# doesn't work...
+# plt_posterior <- plt_post_beta(model_data_scaled, x_vals, m_stan_group_scaled_acc, X)
+
 
 #### m3: Acc ~ (group + acc_type)^2 ####
 #### NB: work in progress... not sure if needed? ####
