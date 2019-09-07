@@ -75,14 +75,6 @@ m_dat %>%
   ggplot(aes(accuracy)) +
   geom_density()  
 
-# plot raw data and fit output 
-m_dat %>%
-  ggplot(aes(accuracy)) + 
-  geom_density(fill = "black", alpha = 0.3) + 
-  geom_line(data = temp, 
-            aes(x, y),
-            colour = "blue")
-
 # fit distribution
 prior_est <- fitdistrplus::fitdist(m_dat$accuracy, "beta")
 a <- as.numeric(prior_est$estimate[1])
@@ -91,17 +83,29 @@ b <- as.numeric(prior_est$estimate[2])
 
 # settings for the priors
 n <- 250 
-beta_mu <- (a/(a+b))
-beta_sd <- 0.7
-# variance
-# gamma_mu <- (a*b)/((a+b)^2*(a+b+1))
-gamma_mu <- 3
-gamma_sd <- 0.5
+# mean of distribution
+mu <- a/(a+b)
+# transform for prior
+beta_mu <- gtools::logit(mu)
+beta_sd <- .4
+# get precision
+phi <- 1/((a*b)/(((a+b)^2)*(a+b+1)))
+# transform for prior
+gamma_mu <- log(phi)
+gamma_sd <- 1.4
 x_vals <- seq(0,1.001, 0.001)
 
 # for plotting real shape
 temp <- data.frame(x = x_vals,
                    y = dbeta(x_vals, a, b))
+
+# plot raw data and fit output 
+m_dat %>%
+  ggplot(aes(accuracy)) + 
+  geom_density(fill = "black", alpha = 0.3) + 
+  geom_line(data = temp, 
+            aes(x, y),
+            colour = "blue")
 
 # empty frame to add to
 priors <- data.frame(iter = numeric(),

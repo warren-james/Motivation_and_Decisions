@@ -57,11 +57,13 @@ model {
 
   // priors
 
-  beta ~ normal(0.69, 0.7);
+  beta[1] ~ normal(0.8, 0.4);
+  beta[2] ~ normal(0, 1);
+  beta[3] ~ normal(0, 1);
 
-
-  gamma ~ normal(3, 0.5);
-
+  gamma[1] ~ normal(5.6, 1.4);
+  gamma[2] ~ normal(0, 1);
+  gamma[3] ~ normal(0, 1);
 
   // likelihood
 

@@ -58,10 +58,23 @@ m_stan_group <- stan(
 )
 
 # save above
-save(model_data, file = "modelling/model_data/beta_1")
-save(m_stan_group, file = "modelling/model_outputs/m_stan_group_beta_1")
+save(model_data, file = "modelling/model_data/betaacc_1")
+save(m_stan_group, file = "modelling/model_outputs/m_stan_group_beta_acc")
 
-# same again with new priors
+# same again with normalising priors
+m_stan_group_p <- stan(
+  file = "modelling/models/stan_model.stan",
+  data = stan_df,
+  chains = 1,
+  warmup = 2000,
+  iter = 4000,
+  refresh = 100
+)
+
+# save 
+save(m_stan_group_p, file = "modelling/model_outputs/m_stan_group_beta_acc_p")
+
+# same again with skewed priors
 m_stan_group_pdata <- stan(
   file = "modelling/models/stan_model_pfdata2.stan",
   data = stan_df,
@@ -72,7 +85,7 @@ m_stan_group_pdata <- stan(
 )
 
 # save above
-save(m_stan_group_pdata, file = "modelling/model_outputs/m_stan_group_beta_1_pdata")
+save(m_stan_group_pdata, file = "modelling/model_outputs/m_stan_group_beta_acc_pdata")
 
 #### STAN: Predicted Accuracy ####
 # same as above but now on expected accuracy
@@ -99,20 +112,9 @@ m_stan_group_exp <- stan(
   refresh = 100
 )
 
-save(model_data, file = "modelling/model_data/beta_2")
-save(m_stan_group_exp, file = "modelling/model_outputs/m_stan_group_beta_2")
+save(model_data, file = "modelling/model_data/beta_exp_np")
+save(m_stan_group_exp, file = "modelling/model_outputs/m_stan_group_beta_exp_np")
 
-# same again with priors (no effect)
-m_stan_group_exp_pdata <- stan(
-  file = "modelling/models/stan_model_pfdata.stan",
-  data = stan_df,
-  chains = 1,
-  warmup = 2000,
-  iter = 4000,
-  refresh = 100
-)
-
-save(m_stan_group_exp_pdata, file = "modelling/model_outputs/m_stan_group_beta_2_pdata")
 
 # same again with new (skewed) priors
 m_stan_group_exp_pdata <- stan(
@@ -124,7 +126,7 @@ m_stan_group_exp_pdata <- stan(
   refresh = 100
 )
 
-save(m_stan_group_exp_pdata, file = "modelling/model_outputs/m_stan_group_beta_2_pdata2")
+save(m_stan_group_exp_pdata, file = "modelling/model_outputs/m_stan_group_beta_exp_pdata")
 
 
 #### STAN: acc ~ group * acc_type ####

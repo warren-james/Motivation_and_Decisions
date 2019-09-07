@@ -291,8 +291,7 @@ x_vals <- seq(0,1-0.001,0.001)
 #### m1: acc ~ group ####
 #### m1: First no priors ####
 load("modelling/model_data/beta_1")
-load("modelling/model_outputs/m_stan_group_beta_1")
-load("modelling/model_outputs/m_stan_group_beta_1_pdata")
+load("modelling/model_outputs/m_stan_group_beta_acc")
 model <- m_stan_group
 samples <- rstan::extract(model)
 
@@ -374,8 +373,23 @@ ggsave(plt_save, file = "../Figures/Model_stan_rawacc_compare_np.png",
        height = 5,
        width = 13)
 
+# tidy 
+rm(height,
+   hpdi_diff,
+   hpdi_mu, 
+   max_height,
+   mu,
+   mu_df,
+   mu_list,
+   plt_diff,
+   plt_mu,
+   plt_posterior,
+   plt_save,
+   plt_shaded_mu,
+   samples)
+
 #### m1: Now with priors ####
-load("modelling/model_outputs/m_stan_group_beta_1_pdata")
+load("modelling/model_outputs/m_stan_group_beta_acc_pdata")
 model <- m_stan_group_pdata
 samples <- rstan::extract(model)
 
@@ -386,7 +400,7 @@ plt_posterior <- plt_posterior +
 plt_posterior
 
 # save 
-ggsave("../Figures/Model_stan_rawacc.png",
+ggsave("../Figures/Model_stan_rawacc_pdata.png",
        height = 3.5,
        width = 5.6)
 
@@ -419,7 +433,7 @@ plt_posterior +
   theme(legend.title = element_blank(),
         legend.spacing.x = unit(0.5, units = "cm"))
 
-ggsave("../Figures/Model_stan_rawacc_hpdi.png",
+ggsave("../Figures/Model_stan_rawacc_pdata_hpdi.png",
        height = 3.5,
        width = 5.6)
 
@@ -452,10 +466,25 @@ ggsave(plt_save, file = "../Figures/Model_stan_rawacc_compare.png",
        height = 5,
        width = 13)
 
+# tidy 
+rm(height,
+   hpdi_diff,
+   hpdi_mu, 
+   max_height,
+   mu,
+   mu_df,
+   mu_list,
+   plt_diff,
+   plt_mu,
+   plt_posterior,
+   plt_save,
+   plt_shaded_mu,
+   samples)
+
 #### m2: pred_acc ~ group ####
 #### m2: no priors ####
 load("modelling/model_data/beta_2")
-load("modelling/model_outputs/m_stan_group_beta_2")
+load("modelling/model_outputs/m_stan_group_beta_exp_np")
 model <- m_stan_group_exp
 samples <- rstan::extract(model)
 
@@ -532,13 +561,28 @@ hpdi_diff <- plt_diff[[2]]
 hpdi_diff 
 
 # side by side for paper 
-plt_save <- gridExtra::grid.arrange(plt_posterior, plt_diff, ncol = 2)
+plt_save <- gridExtra::grid.arrange(plt_posterior, plt_diff[[1]], ncol = 2)
 ggsave(plt_save, file = "../Figures/Model_stan_expacc_compare_np.png",
        height = 5,
        width = 13)
 
+# tidy 
+rm(height,
+   hpdi_diff,
+   hpdi_mu, 
+   max_height,
+   mu,
+   mu_df,
+   mu_list,
+   plt_diff,
+   plt_mu,
+   plt_posterior,
+   plt_save,
+   plt_shaded_mu,
+   samples)
+
 #### m2: w/ priors ####
-load("modelling/model_outputs/m_stan_group_beta_2_pdata")
+load("modelling/model_outputs/m_stan_group_beta_exp_pdata")
 model <- m_stan_group_exp_pdata
 samples <- rstan::extract(model)
 
@@ -610,11 +654,25 @@ hpdi_diff <- plt_diff[[2]]
 hpdi_diff 
 
 # side by side for paper 
-plt_save <- gridExtra::grid.arrange(plt_posterior, plt_diff, ncol = 2)
+plt_save <- gridExtra::grid.arrange(plt_posterior, plt_diff[[1]], ncol = 2)
 ggsave(plt_save, file = "../Figures/Model_stan_expacc_compare_np.png",
        height = 5,
        width = 13)
 
+# tidy 
+rm(height,
+   hpdi_diff,
+   hpdi_mu, 
+   max_height,
+   mu,
+   mu_df,
+   mu_list,
+   plt_diff,
+   plt_mu,
+   plt_posterior,
+   plt_save,
+   plt_shaded_mu,
+   samples)
 
 #### m4: actual acc ~ (group + scaled_sep)^2 ####
 load("modelling/model_data/model_data_scaled")
