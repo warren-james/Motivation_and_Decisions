@@ -1,0 +1,177 @@
+\begin{thebibliography}{-------}
+\providecommand{\natexlab}[1]{#1}
+
+\bibitem[Najemnik and Geisler(2005)]{najemnik2005optimal}
+Najemnik, J.; Geisler, W.S.
+\newblock Optimal eye movement strategies in visual search.
+\newblock {\em Nature} {\bf 2005}, {\em 434},~387--391.
+
+\bibitem[Clarke and Hunt(2016)]{clarke2015failure}
+Clarke, A.D.F.; Hunt, A.R.
+\newblock Failure of intuition when choosing whether to invest in a single goal
+  or split resources between two goals.
+\newblock {\em Psychological Science} {\bf 2016}, {\em 27},~64--74.
+
+\bibitem[Morvan and Maloney(2012)]{morvan2012human}
+Morvan, C.; Maloney, L.T.
+\newblock Human visual search does not maximize the post-saccadic probability
+  of identifying targets.
+\newblock {\em PLoS Comput Biol} {\bf 2012}, {\em 8},~e1002342.
+
+\bibitem[Clarke \em{et~al.}(2016)Clarke, Green, Chantler, and
+  Hunt]{clarke2016stocha}
+Clarke, A.D.F.; Green, P.; Chantler, M.J.; Hunt, A.R.
+\newblock {Human search for a target on a textured background is consistent
+  with a stochastic model}.
+\newblock {\em Journal of Vision} {\bf 2016}, {\em 16},~4--4.
+\newblock
+  doi:{\changeurlcolor{black}\href{https://doi.org/10.1167/16.7.4}{\detokenize{10.1167/16.7.4}}}.
+
+\bibitem[Nowakowska \em{et~al.}(2017)Nowakowska, Clarke, and
+  Hunt]{nowakowska2017human}
+Nowakowska, A.; Clarke, A.D.; Hunt, A.R.
+\newblock Human visual search behaviour is far from ideal.
+\newblock {\em Proceedings of the Royal Society B: Biological Sciences} {\bf
+  2017}, {\em 284},~20162767.
+
+\bibitem[Clarke \em{et~al.}(2018)Clarke, Irons, James, Leber, and
+  Hunt]{clarke2018stable}
+Clarke, A.D.F.; Irons, J.; James, W.R.G.; Leber, A.B.; Hunt, A.R.
+\newblock Stable individual differences in strategies within, but not between,
+  visual search tasks {\bf 2018}.
+
+\bibitem[Nowakowska \em{et~al.}(2019)Nowakowska, Clarke, Sahraie, and
+  Hunt]{nowakowska2019practice}
+Nowakowska, A.; Clarke, A.D.; Sahraie, A.; Hunt, A.R.
+\newblock Practice-related changes in eye movement strategy in healthy adults
+  with simulated hemianopia.
+\newblock {\em Neuropsychologia} {\bf 2019}, {\em 128},~232--240.
+
+\bibitem[Rahnev and Denison(2018)]{rahnev2018suboptimality}
+Rahnev, D.; Denison, R.N.
+\newblock Suboptimality in perceptual decision making.
+\newblock {\em Behavioral and Brain Sciences} {\bf 2018}, {\em 41}.
+
+\bibitem[Kahneman and Tversky(1984)]{KahnemanChoicesValuseFrames}
+Kahneman, D.; Tversky, A.
+\newblock Choices, Values, and Frames.
+\newblock {\em American Psychologist} {\bf 1984}, {\em 39},~341--350.
+
+\bibitem[Gigerenzer and Gaissmaier(2011)]{Gigerenzer2011}
+Gigerenzer, G.; Gaissmaier, W.
+\newblock Heuristic Decision Making.
+\newblock {\em Annual Review of Psychology} {\bf 2011}, {\em 62},~451--482.
+\newblock
+  doi:{\changeurlcolor{black}\href{https://doi.org/10.1146/annurev-psych-120709-145346}{\detokenize{10.1146/annurev-psych-120709-145346}}}.
+
+\bibitem[Simon(1990)]{simon1990invariants}
+Simon, H.A.
+\newblock Invariants of human behavior.
+\newblock {\em Annual review of psychology} {\bf 1990}, {\em 41},~1--20.
+
+\bibitem[James \em{et~al.}(2017)James, Clarke, and Hunt]{james2017failure}
+James, W.R.G.; Clarke, A.D.F.; Hunt, A.R.
+\newblock Failure to use probability of success when deciding whether to pursue
+  one goal or two.
+\newblock  Proceedings of the 39th annual meeting of the Cognitive Science
+  Society. Cogsci,  2017.
+
+\bibitem[Atkinson and Litwin(1960)]{atkinson1960achievement}
+Atkinson, J.W.; Litwin, G.H.
+\newblock Achievement motive and test anxiety conceived as motive to approach
+  success and motive to avoid failure.
+\newblock {\em The journal of abnormal and social psychology} {\bf 1960}, {\em
+  60},~52.
+
+\bibitem[Goodnow(1955)]{Goodnow1955}
+Goodnow, J.J.
+\newblock Determinants of Choice-Distribution in Two-Choice Situations.
+\newblock {\em The American Journal of Psychology} {\bf 1955}, {\em
+  68},~106--116.
+
+\bibitem[Phillips and Edwards(1966)]{phillips1966conservatism}
+Phillips, L.D.; Edwards, W.
+\newblock Conservatism in a simple probability inference task.
+\newblock {\em Journal of experimental psychology} {\bf 1966}, {\em 72},~346.
+
+\bibitem[Miranda and Palmer(2014)]{miranda2014intrinsic}
+Miranda, A.T.; Palmer, E.M.
+\newblock Intrinsic motivation and attentional capture from gamelike features
+  in a visual search task.
+\newblock {\em Behavior Research Methods} {\bf 2014}, {\em 46},~159--172.
+
+\bibitem[Hunt \em{et~al.}()Hunt, James, Mackay, Reuther, and
+  Clarke]{Huntlearning}
+Hunt, A.R.; James, W.R.G.; Mackay, E.; Reuther, J.; Clarke, A.D.F.
+\newblock Can we learn to make optimal choices?
+\newblock Submitted.
+
+\bibitem[Pelli(1997)]{pelli1997videotoolbox}
+Pelli, D.G.
+\newblock The VideoToolbox software for visual psychophysics: Transforming
+  numbers into movies.
+\newblock {\em Spatial vision} {\bf 1997}, {\em 10},~437--442.
+
+\bibitem[Cornelissen \em{et~al.}(2002)Cornelissen, Peters, and
+  Palmer]{cornelissen2002eyelink}
+Cornelissen, F.W.; Peters, E.M.; Palmer, J.
+\newblock The Eyelink Toolbox: eye tracking with MATLAB and the Psychophysics
+  Toolbox.
+\newblock {\em Behavior Research Methods, Instruments, \& Computers} {\bf
+  2002}, {\em 34},~613--617.
+
+\bibitem[{R Core Team}(2016)]{R}
+{R Core Team}.
+\newblock {\em R: A Language and Environment for Statistical Computing}.
+\newblock R Foundation for Statistical Computing, Vienna, Austria,  2016.
+
+\bibitem[{Stan Development Team}(2018)]{Rstan}
+{Stan Development Team}.
+\newblock {RStan}: the {R} interface to {Stan},  2018.
+\newblock R package version 2.18.2.
+
+\bibitem[Ferrari and Cribari-Neto(2004)]{ferrari2004beta}
+Ferrari, S.; Cribari-Neto, F.
+\newblock Beta regression for modelling rates and proportions.
+\newblock {\em Journal of applied statistics} {\bf 2004}, {\em 31},~799--815.
+
+\bibitem[Engelmann and Pessoa(2007)]{engelmann2007motivation}
+Engelmann, J.B.; Pessoa, L.
+\newblock " Motivation sharpens exogenous spatial attention": Correction to
+  Engelmann and Pessoa (2007).
+\newblock {\em Emotion} {\bf 2007}, {\em 7},~875.
+
+\bibitem[Manohar \em{et~al.}(2017)Manohar, Finzi, Drew, and
+  Husain]{manohar2017distinct}
+Manohar, S.G.; Finzi, R.D.; Drew, D.; Husain, M.
+\newblock Distinct motivational effects of contingent and noncontingent
+  rewards.
+\newblock {\em Psychological science} {\bf 2017}, {\em 28},~1016--1026.
+
+\bibitem[Massar \em{et~al.}(2016)Massar, Lim, Sasmita, and
+  Chee]{massar2016rewards}
+Massar, S.A.; Lim, J.; Sasmita, K.; Chee, M.W.
+\newblock Rewards boost sustained attention through higher effort: A
+  value-based decision making approach.
+\newblock {\em Biological Psychology} {\bf 2016}, {\em 120},~21--27.
+
+\bibitem[Trommersh{\"a}user \em{et~al.}(2006)Trommersh{\"a}user, Landy, and
+  Maloney]{trommershauser2006humans}
+Trommersh{\"a}user, J.; Landy, M.S.; Maloney, L.T.
+\newblock Humans rapidly estimate expected gain in movement planning.
+\newblock {\em Psychological science} {\bf 2006}, {\em 17},~981--988.
+
+\bibitem[Trommersh{\"a}user \em{et~al.}(2005)Trommersh{\"a}user, Gepshtein,
+  Maloney, Landy, and Banks]{trommershauser2005optimal}
+Trommersh{\"a}user, J.; Gepshtein, S.; Maloney, L.T.; Landy, M.S.; Banks, M.S.
+\newblock Optimal compensation for changes in task-relevant movement
+  variability.
+\newblock {\em Journal of Neuroscience} {\bf 2005}, {\em 25},~7169--7178.
+
+\bibitem[Hesse \em{et~al.}()Hesse, Kangur, and Hunt]{Hessereaching}
+Hesse, C.; Kangur, K.; Hunt, A.R.
+\newblock Decision making in slow and rapid reaching: Sacrificing maximum task
+  success to minimize effort.
+\newblock Submitted.
+
+\end{thebibliography}

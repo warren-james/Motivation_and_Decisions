@@ -1,0 +1,125 @@
+---
+title: "Supplementary Material"
+output:
+  html_document: default
+---
+
+```{r setup, include=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(extraDistr)
+library(psyphy) 
+library(brms)
+
+# function to get visual degrees 
+get_VisDegs <- function(size,distance){
+  ((2*atan2(size,(2*distance)))*180)/pi
+}
+
+# some constants
+Screen_dist <- 60
+x_res <- 1920
+x_width <- 54
+ppcm <- x_res/x_width
+
+```
+
+## Fitting Part 1 
+To estimate participants accuracy over distance, we used a general linear model with using a binomial family. The "psyphy" package was used so as to inform the model that there were only two choices available to the participant, and as such, chance level was 50%.
+```{r Psychometric curves, warning=F}
+load("../Analysis/scratch/Part1_peng")
+
+# get aggregated data 
+agDat <- df %>%
+  na.omit() %>% 
+  group_by(participant, separation) %>% 
+  summarise(Accuracy = mean(accuracy))
+
+# pick example participant
+participant <- "19"
+
+# plot data 
+plt_curve <- agDat[agDat$participant == participant,] %>%
+  ggplot(aes(get_VisDegs(separation/ppcm, Screen_dist), Accuracy)) + 
+  geom_smooth(colour = "black", method = glm,
+              method.args = list(family = binomial(mafc.logit(2))),
+              se = F, fullrange = T) + 
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  geom_point() + 
+  theme_bw() 
+plt_curve$labels$y <- "Accuracy"
+plt_curve$labels$x <- "Delta (Visual Degrees)"
+plt_curve
+```
+
+## Getting values for the priors 
+To set the priors for the main model, we used the extraDistr package to fit a beta distribution to the participants average session 1 accuracy. The values obtained allowed us to then obtain measures for the mean and precision of this distribution which in turn allowed us to calculate values to be used as parameters. The results of this process can be seen in the figure below. The black shaded region reprsents the raw data. The blue dashed line shows an estimated beta distribution for these data. 
+```{r Sorting Priors, message = F, warning = F}
+# load data 
+load("../Analysis/scratch/Part1")
+# make plot
+plt_part1 <- m_dat %>%
+  ggplot(aes(accuracy)) + 
+  geom_density() + 
+  scale_x_continuous(labels = scales::percent_format(accuracy = 1),
+                     limits = c(0.4, 0.9)) + 
+  theme_bw()
+plt_part1$labels$x <- "Accuracy"
+
+# get values for priors
+prior_est <- fitdistrplus::fitdist(m_dat$accuracy, "beta")
+a <- as.numeric(prior_est$estimate[1])
+b <- as.numeric(prior_est$estimate[2])
+
+prior_shape <- data.frame(x = seq(0,1.001,0.001),
+                          y = dbeta(seq(0,1.001,0.001),a, b))
+
+plt_part1 + 
+  geom_line(data = prior_shape, 
+            aes(x, y),
+            colour = "blue",
+            linetype = 2) 
+```
+
+## Model including distance 
+In this model, group membership, delta, and the interaction between these were added as parameters. With increasing distance, there should be a drop in performance. Separation was scaled by dividing the value (in pixels) by the maximum value each participant was tested at. This was done so as to avoid egregiously large parameter values. This was carried out for both Actual and Expected accuracy as in the main text.
+
+As can be seen in the plots below, participants in the control group had the lowest rate of success accross all separations. For all groups, increased separation of the targets did result in a lower accuracy rate. Interestingly, the effect of distance was larger for the Optimal and Motivated groups when compared to the Control group. However, this may be explained by the lower intercept for the Control group. 
+
+Much like in the main text, when we modelled expected accuray instead of raw accuracy, the results look somewhat different. Now, there appears to be no effect of motivation when compared to the control group. This still fits with the original conclusion that participants in the Motivated group were not making more optimal decisions and instead must have been doing something else in order to achieve a greater rate of success compared to the control group. 
+```{r Delta model, include = F}
+# load models
+load("scratch/markdown_model_act")
+load("scratch/markdown_model_exp")
+```
+
+```{r plots of models, echo = F}
+plt_m_act <- plot(marginal_effects(m1), plot = F)[[3]] + 
+  see::scale_color_flat() + 
+  see::scale_fill_flat() + 
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) + 
+  theme_bw() + 
+  ggtitle("Actual Accuracy") + 
+  theme(legend.position = "none")
+plt_m_act$labels$y <- "Rate of Success" 
+plt_m_act$labels$x <- "Delta (Scaled)" 
+plt_m_act$labels$colour <- "Group"
+plt_m_act$labels$fill <- "Group"
+
+plt_m_exp <- plot(marginal_effects(m2), plot = F)[[3]] + 
+  see::scale_color_flat() + 
+  see::scale_fill_flat() + 
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) + 
+  theme_bw() + 
+  ggtitle("Expected Accuracy") + 
+  theme(legend.position = c(.82,.82))
+plt_m_exp$labels$y <- "Rate of Success" 
+plt_m_exp$labels$x <- "Delta (Scaled)" 
+plt_m_exp$labels$colour <- "Group"
+plt_m_exp$labels$fill <- "Group"
+
+gridExtra::grid.arrange(plt_m_act, plt_m_exp, ncol = 2)
+
+```
+
+

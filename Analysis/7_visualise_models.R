@@ -612,6 +612,7 @@ max_height <- plt_posterior[["data"]] %>%
   group_by(group) %>% 
   mutate(height = max(p)/5) %>% 
   summarise(height = unique(height)) %>%
+  mutate(height = ifelse(group == "Motivated", height + .5, height)) %>%
   ungroup() %>%
   merge(hpdi_mu)
 

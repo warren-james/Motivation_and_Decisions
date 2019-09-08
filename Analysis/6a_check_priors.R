@@ -70,6 +70,9 @@ rm(df, df_peng)
 m_dat <- df_part1 %>%
   group_by(participant) %>%
   summarise(accuracy = mean(accuracy))
+
+# save
+save(m_dat, file = "scratch/Part1")
   
 m_dat %>% 
   ggplot(aes(accuracy)) +
@@ -145,10 +148,6 @@ priors_plt
 
 priors %>% group_by(iter) %>% filter(y == max(y)) %>% ggplot(aes(x_vals)) + geom_histogram() 
 
-# save this
-ggsave("../Figures/priors_plt_estfromdata.png",
-       height = 3.5,
-       width = 5.6)
 
 # show raw data overlay
 priors_plt + geom_line(data = temp,
@@ -157,6 +156,10 @@ priors_plt + geom_line(data = temp,
                        size = 1.5,
                        linetype = 3,
                        size = 0.7)
+# save this
+ggsave("../Figures/priors_plt_estfromdata.png",
+       height = 3.5,
+       width = 5.6)
 
 
 
