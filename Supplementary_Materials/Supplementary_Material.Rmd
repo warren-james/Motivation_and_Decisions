@@ -60,7 +60,8 @@ load("../Analysis/scratch/Part1")
 # make plot
 plt_part1 <- m_dat %>%
   ggplot(aes(accuracy)) + 
-  geom_density() + 
+  geom_density(fill = "black",
+               alpha = 0.3) + 
   scale_x_continuous(labels = scales::percent_format(accuracy = 1),
                      limits = c(0.4, 0.9)) + 
   theme_bw()
